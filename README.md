@@ -155,9 +155,48 @@ This project uses the following packages to provide a robust and secure API:
 
 ## Testing
 
+### Running Tests
+
+To run all tests:
+
 ```
 npm test
 ```
+
+To run specific Journal API tests:
+
+```
+npm run test:journal
+```
+
+### API Testing with Postman
+
+A Postman collection is provided for manual API testing:
+
+1. Import the collection from `src/tests/postman/journal-api.postman_collection.json`
+2. Set up your environment variables:
+   - `baseUrl`: Your API base URL (e.g., `http://localhost:3000`)
+   - `token`: JWT token obtained from login
+   - `tradeId`: ID of a trade entry to test
+   - `tagId`: ID of a custom tag to test
+3. Execute the requests in the collection to test the API endpoints
+
+#### Journal API Endpoints
+
+The Journal API includes the following endpoints for testing:
+
+**Trade Journal Entries:**
+- `POST /api/v1/journal/trades` - Create a new trade entry
+- `GET /api/v1/journal/trades` - Get all trade entries (with pagination & filtering)
+- `GET /api/v1/journal/trades/:tradeId` - Get trade entry by ID
+- `PUT /api/v1/journal/trades/:tradeId` - Update trade entry
+- `DELETE /api/v1/journal/trades/:tradeId` - Delete trade entry
+
+**User Custom Tags:**
+- `POST /api/v1/journal/tags` - Create a new custom tag
+- `GET /api/v1/journal/tags?type={tagType}` - Get user's tags by type
+- `PUT /api/v1/journal/tags/:tagId` - Update custom tag
+- `DELETE /api/v1/journal/tags/:tagId` - Delete custom tag
 
 ## License
 

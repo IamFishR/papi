@@ -38,13 +38,12 @@ module.exports = {
       direction: {
         type: Sequelize.ENUM('Long', 'Short'),
         allowNull: false,
-      },
-      // Pre-Trade Plan & Hypothesis (Section 0)
+      },      // Pre-Trade Plan & Hypothesis (Section 0)
       plan_date_time: {
         type: Sequelize.DATE,
       },
       instruments_watched: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
       },
       market_context_bias: {
         type: Sequelize.ENUM('Bullish', 'Bearish', 'Neutral', 'Range-bound', 'Uncertain'),
@@ -53,7 +52,7 @@ module.exports = {
         type: Sequelize.TEXT,
       },
       setup_conditions: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
       },
       planned_entry_zone_price: {
         type: Sequelize.DECIMAL(10, 4),
@@ -62,7 +61,7 @@ module.exports = {
         type: Sequelize.DECIMAL(10, 4),
       },
       planned_target_prices: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
       },
       planned_position_size_value: {
         type: Sequelize.DECIMAL(10, 4),
@@ -85,15 +84,15 @@ module.exports = {
       invalidation_conditions: {
         type: Sequelize.TEXT,
       },
-      // Trade Execution Metadata (Section 1)
+      // Trade Execution Metadata (Section 1)     
       strategy_tags: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
       },
       primary_analysis_timeframe: {
         type: Sequelize.STRING,
       },
       secondary_analysis_timeframes: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
       },
       screenshot_setup_url: {
         type: Sequelize.STRING,
@@ -184,15 +183,15 @@ module.exports = {
       max_favorable_excursion_percentage: {
         type: Sequelize.DECIMAL(6, 4),
       },
-      // Psychological & Behavioral Review (Section 4)
+      // Psychological & Behavioral Review (Section 4)      
       confidence_in_execution: {
         type: Sequelize.INTEGER,
       },
       dominant_emotions_pre_trade: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
       },
       dominant_emotions_during_trade: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
       },
       focus_level_during_trade: {
         type: Sequelize.INTEGER,
@@ -222,7 +221,7 @@ module.exports = {
         type: Sequelize.BOOLEAN,
       },
       dominant_emotions_post_trade: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
       },
       satisfaction_with_execution: {
         type: Sequelize.INTEGER,
@@ -241,7 +240,7 @@ module.exports = {
         type: Sequelize.TEXT,
       },
       primary_mistake_tags: {
-        type: Sequelize.JSONB,
+        type: Sequelize.JSON,
       },
       root_cause_of_mistakes: {
         type: Sequelize.TEXT,

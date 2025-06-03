@@ -1,0 +1,345 @@
+{
+  "info": {
+    "name": "Journal API",
+    "description": "Collection for testing Trading Journal API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints for getting tokens",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"User123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trade Journal Entries",
+      "description": "Endpoints for managing trade journal entries",
+      "item": [
+        {
+          "name": "Create Trade Entry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"instrument\": \"AAPL\",\n    \"direction\": \"Long\",\n    \"entryDateTime\": \"2025-06-01T10:30:00Z\",\n    \"actualEntryPrice\": 185.75,\n    \"quantity\": 10,\n    \"executionDate\": \"2025-06-01\",\n    \"assetClass\": \"Equity\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/journal/trades",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "journal", "trades"]
+            }
+          }
+        },
+        {
+          "name": "Get All Trade Entries",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/journal/trades?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "journal", "trades"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Trade Entry by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/journal/trades/{{tradeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "journal", "trades", "{{tradeId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Trade Entry",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"actualEntryPrice\": 186.50,\n    \"exitDateTime\": \"2025-06-01T14:45:00Z\",\n    \"actualExitPrice\": 190.25,\n    \"outcome\": \"Win\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/journal/trades/{{tradeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "journal", "trades", "{{tradeId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Trade Entry",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/journal/trades/{{tradeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "journal", "trades", "{{tradeId}}"]
+            }
+          }
+        },
+        {
+          "name": "Filter Trades by Instrument",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/journal/trades?instrument=AAPL",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "journal", "trades"],
+              "query": [
+                {
+                  "key": "instrument",
+                  "value": "AAPL"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter Trades by Date Range",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/journal/trades?dateFrom=2025-05-01&dateTo=2025-06-30",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "journal", "trades"],
+              "query": [
+                {
+                  "key": "dateFrom",
+                  "value": "2025-05-01"
+                },
+                {
+                  "key": "dateTo",
+                  "value": "2025-06-30"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filter Trades by Outcome",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/journal/trades?outcome=Win",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "journal", "trades"],
+              "query": [
+                {
+                  "key": "outcome",
+                  "value": "Win"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Custom Tags",
+      "description": "Endpoints for managing user custom tags",
+      "item": [
+        {
+          "name": "Create Custom Tag",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"tagName\": \"Breakout\",\n    \"tagType\": \"strategy\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/journal/tags",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "journal", "tags"]
+            }
+          }
+        },
+        {
+          "name": "Get Tags by Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/journal/tags?type=strategy",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "journal", "tags"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "strategy"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Custom Tag",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"tagName\": \"Breakout Strategy\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/journal/tags/{{tagId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "journal", "tags", "{{tagId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Custom Tag",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/journal/tags/{{tagId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "journal", "tags", "{{tagId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "YOUR_AUTH_TOKEN",
+      "type": "string"
+    },
+    {
+      "key": "tradeId",
+      "value": "TRADE_ID_HERE",
+      "type": "string"
+    },
+    {
+      "key": "tagId",
+      "value": "TAG_ID_HERE",
+      "type": "string"
+    }
+  ]
+}
