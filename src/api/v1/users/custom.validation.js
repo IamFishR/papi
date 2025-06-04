@@ -31,7 +31,21 @@ const uuid = (value, helpers) => {
   return value;
 };
 
+/**
+ * Custom validation for MongoDB ObjectId
+ * @param {string} value - ObjectId to validate
+ * @param {object} helpers - Joi validation helpers
+ * @returns {string|Error} The value or an error
+ */
+const objectId = (value, helpers) => {
+  if (!value.match(/^[0-9a-fA-F]{24}$/)) {
+    return helpers.message('Invalid id format');
+  }
+  return value;
+};
+
 module.exports = {
   password,
   uuid,
+  objectId,
 };

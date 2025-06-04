@@ -1,5 +1,5 @@
 const httpStatus = require('http-status');
-const catchAsync = require('../../../core/utils/catchAsync');
+const { catchAsync } = require('../../../core/utils/catchAsync');
 const journalService = require('./journal.service');
 const { apiResponse } = require('../../../core/utils/apiResponse');
 const { successMessages } = require('../../../constants/successMessages');
@@ -22,13 +22,13 @@ const getTradeEntries = catchAsync(async (req, res) => {
     limit: req.query.limit,
     page: req.query.page,
   };
-  
+
   // Add additional filters if provided
   if (req.query.instrument) filter.instrument = req.query.instrument;
   if (req.query.outcome) filter.outcome = req.query.outcome;
   if (req.query.dateFrom) filter.executionDateFrom = req.query.dateFrom;
   if (req.query.dateTo) filter.executionDateTo = req.query.dateTo;
-  
+
   const result = await journalService.getTradeEntries(filter, options);
   return apiResponse(res, httpStatus.OK, successMessages.FETCHED, result);
 });

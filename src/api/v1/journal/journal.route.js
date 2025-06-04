@@ -10,25 +10,25 @@ const router = express.Router();
 // Trade Journal Entry routes
 router
   .route('/trades')
-  .post(auth(), validate(journalValidation.createTradeEntry), journalController.createTradeEntry)
-  .get(auth(), validate(journalValidation.getTradeEntries), journalController.getTradeEntries);
+  .post(auth, validate(journalValidation.createTradeEntry), journalController.createTradeEntry)
+  .get(auth, validate(journalValidation.getTradeEntriesQuery, 'query'), journalController.getTradeEntries);
 
 router
   .route('/trades/:tradeId')
-  .get(auth(), validate(journalValidation.getTradeEntry), authorizeTradeJournalResource(), journalController.getTradeEntryById)
-  .put(auth(), validate(journalValidation.updateTradeEntry), authorizeTradeJournalResource(), journalController.updateTradeEntry)
-  .delete(auth(), validate(journalValidation.deleteTradeEntry), authorizeTradeJournalResource(), journalController.deleteTradeEntry);
+  .get(auth, validate(journalValidation.getTradeEntryParams, 'params'), authorizeTradeJournalResource(), journalController.getTradeEntryById)
+  .put(auth, validate(journalValidation.updateTradeEntryParams, 'params'), validate(journalValidation.updateTradeEntryBody), authorizeTradeJournalResource(), journalController.updateTradeEntry)
+  .delete(auth, validate(journalValidation.deleteTradeEntryParams, 'params'), authorizeTradeJournalResource(), journalController.deleteTradeEntry);
 
 // User Custom Tag routes
 router
   .route('/tags')
-  .get(auth(), validate(journalValidation.getUserCustomTags), journalController.getUserCustomTags)
-  .post(auth(), validate(journalValidation.createUserCustomTag), journalController.createUserCustomTag);
+  .get(auth, validate(journalValidation.getUserCustomTagsQuery, 'query'), journalController.getUserCustomTags)
+  .post(auth, validate(journalValidation.createUserCustomTag), journalController.createUserCustomTag);
 
 // Add route for specific tag operations if needed
 router
   .route('/tags/:tagId')
-  .put(auth(), authorizeCustomTagResource(), journalController.updateUserCustomTag)
-  .delete(auth(), authorizeCustomTagResource(), journalController.deleteUserCustomTag);
+  .put(auth, validate(journalValidation.updateUserCustomTagParams, 'params'), validate(journalValidation.updateUserCustomTagBody), authorizeCustomTagResource(), journalController.updateUserCustomTag)
+  .delete(auth, validate(journalValidation.deleteUserCustomTagParams, 'params'), authorizeCustomTagResource(), journalController.deleteUserCustomTag);
 
 module.exports = router;

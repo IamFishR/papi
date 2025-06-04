@@ -20,9 +20,8 @@ module.exports = {
       timestamps: true,
       underscored: true,
       createdAt: 'created_at',
-      updatedAt: 'updated_at',
-    },
-    logging: config.env === 'development' ? console.log : false,
+      updatedAt: 'updated_at',    },
+    logging: false, // Disable SQL logging completely
     pool: {
       max: 5,
       min: 0,

@@ -63,12 +63,15 @@ const onListening = () => {
 
 // Sync database and start server
 const startServer = async () => {
-  try {
-    // Sync database models with database
+  try {    // Sync database models with database
     if (config.env === 'development') {
       // In development, we can use sync({ alter: true }) to automatically alter tables
-      // based on model changes. This is not recommended for production.
-      await db.sequelize.sync({ alter: true });
+      // but with minimal logging
+      const syncOptions = { 
+        alter: true,
+        logging: false
+      };
+      await db.sequelize.sync(syncOptions);
       logger.info('Database synchronized successfully');
     } else {
       // In production, just check the connection

@@ -13,6 +13,14 @@ const errorMessages = require('../../constants/errorMessages');
  */
 const validate = (schema, property = 'body') => {
   return (req, res, next) => {
+    if (!schema || typeof schema.validate !== 'function') {
+      console.error('Invalid schema provided for validation:', property, schema);
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        status: 'error',
+        message: 'Server configuration error',
+      });
+    }
+    
     const { error } = schema.validate(req[property], { abortEarly: false });
     
     if (!error) {

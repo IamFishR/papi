@@ -9,10 +9,9 @@ module.exports = (sequelize) => {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
-    },
-    userId: {
+    },    userId: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true, // Changed to true to allow ON DELETE SET NULL
       field: 'user_id',
       references: {
         model: 'users',

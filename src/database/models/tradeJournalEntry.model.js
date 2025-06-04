@@ -9,10 +9,9 @@ module.exports = (sequelize) => {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
-    },
-    userId: {
+    },    userId: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true, // Changed to true to allow ON DELETE SET NULL to work
       field: 'user_id',
       references: {
         model: 'users',
@@ -43,9 +42,8 @@ module.exports = (sequelize) => {
     planDateTime: {
       type: DataTypes.DATE,
       field: 'plan_date_time',
-    },
-    instrumentsWatched: {
-      type: DataTypes.JSONB,
+    },    instrumentsWatched: {
+      type: DataTypes.JSON,
       field: 'instruments_watched',
     },
     marketContextBias: {
@@ -55,9 +53,8 @@ module.exports = (sequelize) => {
     tradeThesisCatalyst: {
       type: DataTypes.TEXT,
       field: 'trade_thesis_catalyst',
-    },
-    setupConditions: {
-      type: DataTypes.JSONB,
+    },    setupConditions: {
+      type: DataTypes.JSON,
       field: 'setup_conditions',
     },
     plannedEntryZonePrice: {
@@ -67,9 +64,8 @@ module.exports = (sequelize) => {
     plannedStopLossPrice: {
       type: DataTypes.DECIMAL(10, 4),
       field: 'planned_stop_loss_price',
-    },
-    plannedTargetPrices: {
-      type: DataTypes.JSONB,
+    },    plannedTargetPrices: {
+      type: DataTypes.JSON,
       field: 'planned_target_prices',
     },
     plannedPositionSizeValue: {
@@ -101,8 +97,8 @@ module.exports = (sequelize) => {
       field: 'invalidation_conditions',
     },
     // Trade Execution Metadata (Section 1)
-    strategyTags: {
-      type: DataTypes.JSONB,
+     strategyTags: {
+      type: DataTypes.JSON,
       field: 'strategy_tags',
     },
     primaryAnalysisTimeframe: {
@@ -110,7 +106,7 @@ module.exports = (sequelize) => {
       field: 'primary_analysis_timeframe',
     },
     secondaryAnalysisTimeframes: {
-      type: DataTypes.JSONB,
+      type: DataTypes.JSON,
       field: 'secondary_analysis_timeframes',
     },
     screenshotSetupUrl: {
@@ -234,11 +230,11 @@ module.exports = (sequelize) => {
       field: 'confidence_in_execution',
     },
     dominantEmotionsPreTrade: {
-      type: DataTypes.JSONB,
+      type: DataTypes.JSON,
       field: 'dominant_emotions_pre_trade',
     },
     dominantEmotionsDuringTrade: {
-      type: DataTypes.JSONB,
+      type: DataTypes.JSON,
       field: 'dominant_emotions_during_trade',
     },
     focusLevelDuringTrade: {
@@ -278,7 +274,7 @@ module.exports = (sequelize) => {
       field: 'traded_pnl_instead_of_plan',
     },
     dominantEmotionsPostTrade: {
-      type: DataTypes.JSONB,
+      type: DataTypes.JSON,
       field: 'dominant_emotions_post_trade',
     },
     satisfactionWithExecution: {
@@ -303,7 +299,7 @@ module.exports = (sequelize) => {
       field: 'what_went_wrong',
     },
     primaryMistakeTags: {
-      type: DataTypes.JSONB,
+      type: DataTypes.JSON,
       field: 'primary_mistake_tags',
     },
     rootCauseOfMistakes: {

@@ -11,16 +11,15 @@ module.exports = {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true,
-      },
-      user_id: {
+      },      user_id: {
         type: Sequelize.UUID,
-        allowNull: false,
+        allowNull: true, // Changed to true to allow ON DELETE SET NULL
         references: {
           model: 'users',
           key: 'id',
         },
         onUpdate: 'CASCADE',
-        onDelete: 'CASCADE',
+        onDelete: 'SET NULL', // Changed from CASCADE to SET NULL
       },
       trade_id_string: {
         type: Sequelize.STRING,

@@ -26,4 +26,10 @@ module.exports = {
   ORDER_UPDATED: 'Order updated successfully.',
   ORDER_CANCELLED: 'Order cancelled successfully.',
   ORDER_COMPLETED: 'Order completed successfully.',
+  
+  // General CRUD operation messages
+  CREATED: 'Resource created successfully.',
+  UPDATED: 'Resource updated successfully.',
+  DELETED: 'Resource deleted successfully.',
+  FETCHED: 'Resource fetched successfully.',
 };
