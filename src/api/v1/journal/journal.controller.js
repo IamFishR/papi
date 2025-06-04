@@ -1,15 +1,15 @@
 const httpStatus = require('http-status');
 const { catchAsync } = require('../../../core/utils/catchAsync');
 const journalService = require('./journal.service');
-const { apiResponse } = require('../../../core/utils/apiResponse');
-const { successMessages } = require('../../../constants/successMessages');
+const apiResponse = require('../../../core/utils/apiResponse');
+const successMessages = require('../../../constants/successMessages');
 
 /**
  * Create a new trade journal entry
  */
 const createTradeEntry = catchAsync(async (req, res) => {
   const tradeEntry = await journalService.createTradeEntry(req.user.id, req.body);
-  return apiResponse(res, httpStatus.CREATED, successMessages.CREATED, tradeEntry);
+  return apiResponse.success(res, 201, successMessages.CREATED, tradeEntry);
 });
 
 /**
@@ -18,9 +18,9 @@ const createTradeEntry = catchAsync(async (req, res) => {
 const getTradeEntries = catchAsync(async (req, res) => {
   const filter = { userId: req.user.id };
   const options = {
-    sortBy: req.query.sortBy,
-    limit: req.query.limit,
-    page: req.query.page,
+    sortBy: req.query.sortBy || 'executionDate:desc',
+    limit: parseInt(req.query.limit) || 10,
+    page: parseInt(req.query.page) || 1,
   };
 
   // Add additional filters if provided
@@ -28,18 +28,16 @@ const getTradeEntries = catchAsync(async (req, res) => {
   if (req.query.outcome) filter.outcome = req.query.outcome;
   if (req.query.dateFrom) filter.executionDateFrom = req.query.dateFrom;
   if (req.query.dateTo) filter.executionDateTo = req.query.dateTo;
-
   const result = await journalService.getTradeEntries(filter, options);
-  return apiResponse(res, httpStatus.OK, successMessages.FETCHED, result);
+  return apiResponse.success(res, 200, successMessages.FETCHED, result);
 });
 
 /**
  * Get a specific trade entry by ID
  */
-const getTradeEntryById = catchAsync(async (req, res) => {
-  // Using req.tradeEntry from the middleware if available
+const getTradeEntryById = catchAsync(async (req, res) => {  // Using req.tradeEntry from the middleware if available  
   const tradeEntry = req.tradeEntry || await journalService.getTradeEntryById(req.params.tradeId, req.user.id);
-  return apiResponse(res, httpStatus.OK, successMessages.FETCHED, tradeEntry);
+  return apiResponse.success(res, 200, successMessages.FETCHED, tradeEntry);
 });
 
 /**
@@ -53,7 +51,7 @@ const updateTradeEntry = catchAsync(async (req, res) => {
   } else {
     tradeEntry = await journalService.updateTradeEntry(req.params.tradeId, req.user.id, req.body);
   }
-  return apiResponse(res, httpStatus.OK, successMessages.UPDATED, tradeEntry);
+  return apiResponse.success(res, 200, successMessages.UPDATED, tradeEntry);
 });
 
 /**
@@ -66,7 +64,7 @@ const deleteTradeEntry = catchAsync(async (req, res) => {
   } else {
     await journalService.deleteTradeEntry(req.params.tradeId, req.user.id);
   }
-  return apiResponse(res, httpStatus.OK, successMessages.DELETED);
+  return apiResponse.success(res, 200, successMessages.DELETED);
 });
 
 /**
@@ -74,7 +72,7 @@ const deleteTradeEntry = catchAsync(async (req, res) => {
  */
 const getUserCustomTags = catchAsync(async (req, res) => {
   const tags = await journalService.getUserCustomTags(req.user.id, req.query.type);
-  return apiResponse(res, httpStatus.OK, successMessages.FETCHED, tags);
+  return apiResponse.success(res, 200, successMessages.FETCHED, tags);
 });
 
 /**
@@ -82,7 +80,7 @@ const getUserCustomTags = catchAsync(async (req, res) => {
  */
 const createUserCustomTag = catchAsync(async (req, res) => {
   const tag = await journalService.createUserCustomTag(req.user.id, req.body);
-  return apiResponse(res, httpStatus.CREATED, successMessages.CREATED, tag);
+  return apiResponse.success(res, 201, successMessages.CREATED, tag);
 });
 
 /**
@@ -96,7 +94,7 @@ const updateUserCustomTag = catchAsync(async (req, res) => {
   } else {
     tag = await journalService.updateUserCustomTag(req.params.tagId, req.user.id, req.body);
   }
-  return apiResponse(res, httpStatus.OK, successMessages.UPDATED, tag);
+  return apiResponse.success(res, 200, successMessages.UPDATED, tag);
 });
 
 /**
@@ -109,7 +107,7 @@ const deleteUserCustomTag = catchAsync(async (req, res) => {
   } else {
     await journalService.deleteUserCustomTag(req.params.tagId, req.user.id);
   }
-  return apiResponse(res, httpStatus.OK, successMessages.DELETED);
+  return apiResponse.success(res, 200, successMessages.DELETED);
 });
 
 module.exports = {
