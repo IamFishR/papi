@@ -29,9 +29,8 @@ module.exports = (sequelize) => {
     instrument: {
       type: DataTypes.STRING,
       allowNull: false,
-    },
-    assetClass: {
-      type: DataTypes.ENUM('Equity', 'Crypto', 'Forex', 'Futures', 'Options', 'Other'),
+    },    assetClass: {
+      type: DataTypes.ENUM('Equity', 'Stock', 'Crypto', 'Forex', 'Futures', 'Options', 'Other'),
       field: 'asset_class',
     },
     direction: {

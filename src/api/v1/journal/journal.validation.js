@@ -8,10 +8,9 @@ const { objectId } = require('../users/custom.validation');
  */
 const createTradeEntry = Joi.object({
   // Core Info
-  tradeIdString: Joi.string(),
-  executionDate: Joi.date().required(),
+  tradeIdString: Joi.string(),  executionDate: Joi.date().required(),
   instrument: Joi.string().required(),
-  assetClass: Joi.string().valid('Equity', 'Crypto', 'Forex', 'Futures', 'Options', 'Other'),
+  assetClass: Joi.string().valid('Equity', 'Stock', 'Crypto', 'Forex', 'Futures', 'Options', 'Other'),
   direction: Joi.string().valid('Long', 'Short').required(),
   
   // Pre-Trade Plan
@@ -109,11 +108,10 @@ const updateTradeEntryParams = Joi.object({
  * Update trade entry validation schema (body)
  */
 const updateTradeEntryBody = Joi.object({
-  // Same as create but all fields optional
-  tradeIdString: Joi.string(),
+  // Same as create but all fields optional  tradeIdString: Joi.string(),
   executionDate: Joi.date(),
   instrument: Joi.string(),
-  assetClass: Joi.string().valid('Equity', 'Crypto', 'Forex', 'Futures', 'Options', 'Other'),
+  assetClass: Joi.string().valid('Equity', 'Stock', 'Crypto', 'Forex', 'Futures', 'Options', 'Other'),
   direction: Joi.string().valid('Long', 'Short'),
   
   // Pre-Trade Plan (all optional)

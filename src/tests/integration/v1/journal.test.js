@@ -21,7 +21,7 @@ jest.mock('../../../../src/database/models', () => {
     actualEntryPrice: '185.75',
     quantity: 10,
     executionDate: '2025-06-01',
-    assetClass: 'Equity',
+    assetClass: 'Stock',
     createdAt: new Date(),
     updatedAt: new Date()
   });
@@ -79,15 +79,14 @@ describe('Journal API', () => {
    */
   describe('Trade Journal Entries', () => {
     describe('POST /api/v1/journal/trades', () => {
-      it('should create a new trade entry', async () => {
-        const newTrade = {
+      it('should create a new trade entry', async () => {        const newTrade = {
           instrument: 'AAPL',
           direction: 'Long',
           entryDateTime: '2025-06-01T10:30:00Z',
           actualEntryPrice: 185.75,
           quantity: 10,
           executionDate: '2025-06-01',
-          assetClass: 'Equity'
+          assetClass: 'Stock'
         };
         
         // Mock the service response
@@ -122,12 +121,11 @@ describe('Journal API', () => {
                 id: 'mock-trade-id-123',
                 userId: 'mock-user-id-123',
                 instrument: 'AAPL',
-                direction: 'Long',
-                entryDateTime: new Date('2025-06-01T10:30:00Z'),
+                direction: 'Long',                entryDateTime: new Date('2025-06-01T10:30:00Z'),
                 actualEntryPrice: '185.75',
                 quantity: 10,
                 executionDate: '2025-06-01',
-                assetClass: 'Equity'
+                assetClass: 'Stock'
               }
             ],
             meta: {
