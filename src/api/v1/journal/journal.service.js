@@ -12,7 +12,9 @@ const { errorMessages } = require('../../../constants/errorMessages');
 const createTradeEntry = async (userId, entryData) => {
   return TradeJournalEntry.create({ 
     ...entryData,
-    userId 
+    userId,
+    createdAt: new Date(),
+    updatedAt: new Date()
   });
 };
 
@@ -95,7 +97,10 @@ const updateTradeEntry = async (tradeId, userId, updateData) => {
   const tradeEntry = await getTradeEntryById(tradeId, userId);
   
   // Update the trade entry
-  Object.assign(tradeEntry, updateData);
+  Object.assign(tradeEntry, {
+    ...updateData,
+    updatedAt: new Date()
+  });
   await tradeEntry.save();
   
   return tradeEntry;
@@ -109,7 +114,10 @@ const updateTradeEntry = async (tradeId, userId, updateData) => {
  */
 const updateTradeEntryDirect = async (tradeEntry, updateData) => {
   // Update the trade entry
-  Object.assign(tradeEntry, updateData);
+  Object.assign(tradeEntry, {
+    ...updateData,
+    updatedAt: new Date()
+  });
   await tradeEntry.save();
   
   return tradeEntry;

@@ -12,6 +12,7 @@ const createTradeEntry = Joi.object({
   instrument: Joi.string().required(),
   assetClass: Joi.string().valid('Equity', 'Stock', 'Crypto', 'Forex', 'Futures', 'Options', 'Other'),
   direction: Joi.string().valid('Long', 'Short').required(),
+  createdAt: Joi.date().default(Date.now),
   
   // Pre-Trade Plan
   planDateTime: Joi.date(),
@@ -74,11 +75,11 @@ const createTradeEntry = Joi.object({
   focusLevelDuringTrade: Joi.number().integer().min(1).max(5),
   followedPreTradePlan: Joi.boolean(),
   deviationType: Joi.string().valid('Entry', 'StopLoss', 'TargetProfit', 'PositionSize', 'EarlyExit', 'LateExit', 'Other', 'None'),
-  reasonForDeviation: Joi.string(),
+  reasonForDeviation: Joi.string().allow(null, ''),
   impulseActionTaken: Joi.boolean(),
-  impulseActionDescription: Joi.string(),
+  impulseActionDescription: Joi.string().allow(null, ''),
   hesitationOn: Joi.string().valid('None', 'Entry', 'Exit', 'Both'),
-  reasonForHesitation: Joi.string(),
+  reasonForHesitation: Joi.string().allow(null, ''),
   tradedPnlInsteadOfPlan: Joi.boolean(),
   dominantEmotionsPostTrade: Joi.array().items(Joi.string()),
   satisfactionWithExecution: Joi.number().integer().min(1).max(5),
@@ -89,12 +90,12 @@ const createTradeEntry = Joi.object({
   whatWentWell: Joi.string(),
   whatWentWrong: Joi.string(),
   primaryMistakeTags: Joi.array().items(Joi.string()),
-  rootCauseOfMistakes: Joi.string(),
+  rootCauseOfMistakes: Joi.string().allow(null, ''),
   keyLessonLearned: Joi.string(),
   actionableImprovement: Joi.string(),
   overallTradeRating: Joi.number().integer().min(1).max(5),
   additionalNotes: Joi.string(),
-  externalAnalysisLink: Joi.string().uri()
+  externalAnalysisLink: Joi.string().uri().allow(null, ''),
 });
 
 /**
@@ -113,6 +114,8 @@ const updateTradeEntryBody = Joi.object({
   instrument: Joi.string(),
   assetClass: Joi.string().valid('Equity', 'Stock', 'Crypto', 'Forex', 'Futures', 'Options', 'Other'),
   direction: Joi.string().valid('Long', 'Short'),
+  createdAt: Joi.date(),
+  updatedAt: Joi.date().default(Date.now),
   
   // Pre-Trade Plan (all optional)
   planDateTime: Joi.date(),
