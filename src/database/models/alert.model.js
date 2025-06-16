@@ -9,10 +9,9 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
-    },
-    userId: {
+    },    userId: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true, // Changed to true to support ON DELETE SET NULL
       field: 'user_id',
       references: {
         model: 'users',
@@ -212,11 +211,11 @@ module.exports = (sequelize) => {
     ],
   });
 
-  Alert.associate = (models) => {
-    // Alert belongs to a user
+  Alert.associate = (models) => {    // Alert belongs to a user
     Alert.belongsTo(models.User, {
       foreignKey: 'user_id',
       as: 'user',
+      onDelete: 'SET NULL', // Explicitly set onDelete behavior
     });
 
     // Alert belongs to a stock

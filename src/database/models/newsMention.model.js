@@ -106,25 +106,31 @@ module.exports = (sequelize) => {
       },
     ],
   });
-
   NewsMention.associate = (models) => {
-    // NewsMention belongs to a stock
-    NewsMention.belongsTo(models.Stock, {
-      foreignKey: 'stock_id',
-      as: 'stock',
-    });
+    // Check if the models exist before creating associations
+    if (models.Stock) {
+      // NewsMention belongs to a stock
+      NewsMention.belongsTo(models.Stock, {
+        foreignKey: 'stock_id',
+        as: 'stock',
+      });
+    }
 
-    // NewsMention belongs to a news source
-    NewsMention.belongsTo(models.NewsSource, {
-      foreignKey: 'news_source_id',
-      as: 'newsSource',
-    });
+    if (models.NewsSource) {
+      // NewsMention belongs to a news source
+      NewsMention.belongsTo(models.NewsSource, {
+        foreignKey: 'news_source_id',
+        as: 'newsSource',
+      });
+    }
 
-    // NewsMention belongs to a sentiment type
-    NewsMention.belongsTo(models.SentimentType, {
-      foreignKey: 'sentiment_type_id',
-      as: 'sentimentType',
-    });
+    if (models.SentimentType) {
+      // NewsMention belongs to a sentiment type
+      NewsMention.belongsTo(models.SentimentType, {
+        foreignKey: 'sentiment_type_id',
+        as: 'sentimentType',
+      });
+    }
   };
 
   return NewsMention;

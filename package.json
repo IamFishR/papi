@@ -5,6 +5,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "debug": "node --inspect src/server.js",
+    "debug:break": "node --inspect-brk src/server.js",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
     "test:journal": "jest --testMatch=\"**/tests/integration/v1/journal.test.js\"",

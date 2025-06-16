@@ -127,13 +127,21 @@ module.exports = (sequelize) => {
       },
     },
   });
-
   User.associate = (models) => {
     // User can have many orders
     User.hasMany(models.Order, {
       foreignKey: 'user_id',
       as: 'orders',
     });
+    
+    // User can have many alerts
+    if (models.Alert) {
+      User.hasMany(models.Alert, {
+        foreignKey: 'user_id',
+        as: 'alerts',
+        onDelete: 'SET NULL',
+      });
+    }
   };
 
   return User;

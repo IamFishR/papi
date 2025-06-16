@@ -108,55 +108,69 @@ module.exports = (sequelize) => {
       },
     ],
   });
-
   Stock.associate = (models) => {
-    // Stock belongs to an exchange
-    Stock.belongsTo(models.Exchange, {
-      foreignKey: 'exchange_id',
-      as: 'exchange',
-    });
+    // Check if models exist before creating associations
+    if (models.Exchange) {
+      // Stock belongs to an exchange
+      Stock.belongsTo(models.Exchange, {
+        foreignKey: 'exchange_id',
+        as: 'exchange',
+      });
+    }
 
-    // Stock belongs to a sector
-    Stock.belongsTo(models.Sector, {
-      foreignKey: 'sector_id',
-      as: 'sector',
-    });
+    if (models.Sector) {
+      // Stock belongs to a sector
+      Stock.belongsTo(models.Sector, {
+        foreignKey: 'sector_id',
+        as: 'sector',
+      });
+    }
 
-    // Stock belongs to a currency
-    Stock.belongsTo(models.Currency, {
-      foreignKey: 'currency_id',
-      as: 'currency',
-    });
+    if (models.Currency) {
+      // Stock belongs to a currency
+      Stock.belongsTo(models.Currency, {
+        foreignKey: 'currency_id',
+        as: 'currency',
+      });
+    }
 
-    // Stock has many prices
-    Stock.hasMany(models.StockPrice, {
-      foreignKey: 'stock_id',
-      as: 'prices',
-    });
+    if (models.StockPrice) {
+      // Stock has many prices
+      Stock.hasMany(models.StockPrice, {
+        foreignKey: 'stock_id',
+        as: 'prices',
+      });
+    }    if (models.Alert) {
+      // Stock has many alerts
+      Stock.hasMany(models.Alert, {
+        foreignKey: 'stock_id',
+        as: 'alerts',
+      });
+    }
 
-    // Stock has many alerts
-    Stock.hasMany(models.Alert, {
-      foreignKey: 'stock_id',
-      as: 'alerts',
-    });
+    if (models.TechnicalIndicator) {
+      // Stock has many technical indicators
+      Stock.hasMany(models.TechnicalIndicator, {
+        foreignKey: 'stock_id',
+        as: 'technicalIndicators',
+      });
+    }
 
-    // Stock has many technical indicators
-    Stock.hasMany(models.TechnicalIndicator, {
-      foreignKey: 'stock_id',
-      as: 'technicalIndicators',
-    });
+    if (models.NewsMention) {
+      // Stock has many news mentions
+      Stock.hasMany(models.NewsMention, {
+        foreignKey: 'stock_id',
+        as: 'newsMentions',
+      });
+    }
 
-    // Stock has many news mentions
-    Stock.hasMany(models.NewsMention, {
-      foreignKey: 'stock_id',
-      as: 'newsMentions',
-    });
-
-    // Stock has many watchlist associations
-    Stock.hasMany(models.WatchlistStock, {
-      foreignKey: 'stock_id',
-      as: 'watchlistStocks',
-    });
+    if (models.WatchlistStock) {
+      // Stock has many watchlist associations
+      Stock.hasMany(models.WatchlistStock, {
+        foreignKey: 'stock_id',
+        as: 'watchlistStocks',
+      });
+    }
   };
 
   return Stock;
