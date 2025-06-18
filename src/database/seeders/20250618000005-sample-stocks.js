@@ -5,7 +5,15 @@
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up(queryInterface, Sequelize) {    // Get exchange IDs
+  async up(queryInterface, Sequelize) {
+    // Check if stocks already exist to avoid duplicates
+    const [stockResults] = await queryInterface.sequelize.query('SELECT COUNT(*) as count FROM st_stocks');
+    if (stockResults[0].count > 0) {
+      console.log('Sample stocks already exist, skipping seeder');
+      return;
+    }
+
+    // Get exchange IDs
     const exchanges = await queryInterface.sequelize.query(
       'SELECT id, code FROM st_exchanges',
       { type: Sequelize.QueryTypes.SELECT }

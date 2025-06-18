@@ -5,7 +5,15 @@
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up(queryInterface, Sequelize) {    await queryInterface.bulkInsert('st_exchanges', [
+  async up(queryInterface, Sequelize) {
+    // Check if exchanges already exist to avoid duplicates
+    const [results] = await queryInterface.sequelize.query('SELECT COUNT(*) as count FROM st_exchanges');
+    if (results[0].count > 0) {
+      console.log('Exchanges already exist, skipping seeder');
+      return;
+    }
+    
+    await queryInterface.bulkInsert('st_exchanges', [
       {
         code: 'NASDAQ',
         name: 'National Association of Securities Dealers Automated Quotations',
@@ -17,7 +25,8 @@ module.exports = {
         is_active: true,
         created_at: new Date(),
         updated_at: new Date()
-      },      {
+      },
+      {
         code: 'NYSE',
         name: 'New York Stock Exchange',
         country: 'United States',
@@ -121,6 +130,55 @@ module.exports = {
         timezone: 'Asia/Seoul',
         opening_time: '09:00:00',
         closing_time: '15:30:00',
+        is_active: true,
+        created_at: new Date(),
+        updated_at: new Date()
+      },
+      {
+        code: 'ASX',
+        name: 'Australian Securities Exchange',
+        country: 'Australia',
+        currency_code: 'AUD',
+        timezone: 'Australia/Sydney',
+        opening_time: '10:00:00',
+        closing_time: '16:00:00',
+        is_active: true,
+        created_at: new Date(),
+        updated_at: new Date()
+      },
+      {
+        code: 'B3',
+        name: 'B3 - Brasil Bolsa Balcão',
+        country: 'Brazil',
+        currency_code: 'BRL',
+        timezone: 'America/Sao_Paulo',
+        opening_time: '10:00:00',
+        closing_time: '17:30:00',
+        is_active: true,
+        created_at: new Date(),
+        updated_at: new Date()
+      },
+      // NSE, BSE
+      {
+        code: 'NSE',
+        name: 'National Stock Exchange of India',
+        country: 'India',
+        currency_code: 'INR',
+        timezone: 'Asia/Kolkata',
+        opening_time: '09:15:00',
+        closing_time: '15:30:00',
+        is_active: true,
+        created_at: new Date(),
+        updated_at: new Date()
+      },
+      {
+        code: 'SIX',
+        name: 'SIX Swiss Exchange',
+        country: 'Switzerland',
+        currency_code: 'CHF',
+        timezone: 'Europe/Zurich',
+        opening_time: '09:00:00',
+        closing_time: '17:30:00',
         is_active: true,
         created_at: new Date(),
         updated_at: new Date()

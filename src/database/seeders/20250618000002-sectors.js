@@ -5,7 +5,15 @@
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up(queryInterface, Sequelize) {    await queryInterface.bulkInsert('st_sectors', [
+  async up(queryInterface, Sequelize) {
+    // Check if sectors already exist to avoid duplicates
+    const [results] = await queryInterface.sequelize.query('SELECT COUNT(*) as count FROM st_sectors');
+    if (results[0].count > 0) {
+      console.log('Sectors already exist, skipping seeder');
+      return;
+    }
+    
+    await queryInterface.bulkInsert('st_sectors', [
       {
         code: 'TECH',
         name: 'Technology',

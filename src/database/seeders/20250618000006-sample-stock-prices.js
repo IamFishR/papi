@@ -7,6 +7,13 @@ const moment = require('moment');
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
+    // Check if stock prices already exist to avoid duplicates
+    const [priceResults] = await queryInterface.sequelize.query('SELECT COUNT(*) as count FROM st_stock_prices');
+    if (priceResults[0].count > 0) {
+      console.log('Sample stock prices already exist, skipping seeder');
+      return;
+    }
+
     // Get stock IDs
     const stocks = await queryInterface.sequelize.query(
       'SELECT id, symbol FROM st_stocks',

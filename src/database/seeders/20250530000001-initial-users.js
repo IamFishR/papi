@@ -7,7 +7,15 @@ const { v4: uuidv4 } = require('uuid');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up(queryInterface, Sequelize) {    // Generate hashed password for admin user
+  async up(queryInterface, Sequelize) {
+    // Check if users already exist
+    const [results] = await queryInterface.sequelize.query('SELECT COUNT(*) as count FROM users');
+    if (results[0].count > 0) {
+      console.log('Users already exist, skipping seeder');
+      return;
+    }
+
+    // Generate hashed password for admin user
     const salt = await bcrypt.genSalt(10);
     const adminPassword = await bcrypt.hash('Admin123!', salt);
     const userPassword = await bcrypt.hash('User123!', salt);

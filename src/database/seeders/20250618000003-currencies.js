@@ -5,7 +5,15 @@
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up(queryInterface, Sequelize) {    await queryInterface.bulkInsert('st_currencies', [
+  async up(queryInterface, Sequelize) {
+    // Check if currencies already exist to avoid duplicates
+    const [results] = await queryInterface.sequelize.query('SELECT COUNT(*) as count FROM st_currencies');
+    if (results[0].count > 0) {
+      console.log('Currencies already exist, skipping seeder');
+      return;
+    }
+    
+    await queryInterface.bulkInsert('st_currencies', [
       {
         code: 'USD',
         name: 'US Dollar',

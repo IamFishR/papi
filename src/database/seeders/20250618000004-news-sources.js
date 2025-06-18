@@ -5,7 +5,15 @@
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up(queryInterface, Sequelize) {    await queryInterface.bulkInsert('st_news_sources', [
+  async up(queryInterface, Sequelize) {
+    // Check if news sources already exist to avoid duplicates
+    const [results] = await queryInterface.sequelize.query('SELECT COUNT(*) as count FROM st_news_sources');
+    if (results[0].count > 0) {
+      console.log('News sources already exist, skipping seeder');
+      return;
+    }
+    
+    await queryInterface.bulkInsert('st_news_sources', [
       {
         name: 'Bloomberg',
         url: 'https://www.bloomberg.com',
