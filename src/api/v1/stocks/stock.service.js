@@ -18,7 +18,9 @@ const getStocks = async (filter, options) => {
   const offset = (page - 1) * limit;
 
   // Prepare filter conditions
-  const whereConditions = {};
+  const whereConditions = {
+    isActive: true  // Only return active stocks
+  };
   
   // Apply search filter for symbol or company name
   if (filter.search) {
@@ -41,6 +43,11 @@ const getStocks = async (filter, options) => {
   // Execute query with includes for related data
   const { rows, count } = await db.Stock.findAndCountAll({
     where: whereConditions,
+    include: [
+      { model: db.Exchange, as: 'exchange' },
+      { model: db.Sector, as: 'sector' },
+      { model: db.Currency, as: 'currency' }
+    ],
     limit,
     offset,
     order: [[sortBy || 'symbol', sortOrder || 'ASC']]
@@ -48,11 +55,13 @@ const getStocks = async (filter, options) => {
 
   // Return paginated result
   return {
-    results: rows,
-    totalCount: count,
-    totalPages: Math.ceil(count / limit),
-    currentPage: page,
-    limit
+    stocks: rows,
+    pagination: {
+      totalCount: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+      limit
+    }
   };
 };
 
@@ -74,11 +83,11 @@ const getStockById = async (id) => {
 /**
  * Get stock prices with date range filtering
  * @param {number} stockId - Stock ID
- * @param {Date} fromDate - Start date for price data
- * @param {Date} toDate - End date for price data
+ * @param {Object} dateFilter - Date filter object with from/to properties
  * @returns {Promise<Array>} Stock price data within date range
  */
-const getStockPrices = async (stockId, fromDate, toDate) => {
+const getStockPrices = async (stockId, dateFilter) => {
+  const { from: fromDate, to: toDate } = dateFilter || {};
   // Verify stock exists
   const stock = await db.Stock.findByPk(stockId);
   
@@ -147,11 +156,11 @@ const addStockPrices = async (stockId, priceData) => {
 /**
  * Get stock technical indicators
  * @param {number} stockId - Stock ID
- * @param {string} type - Indicator type
- * @param {number} period - Period for calculation
+ * @param {Object} filter - Filter object with type and period properties
  * @returns {Promise<Array>} Technical indicator data
  */
-const getStockIndicators = async (stockId, type, period) => {
+const getStockIndicators = async (stockId, filter) => {
+  const { type, period } = filter || {};
   // Verify stock exists
   const stock = await db.Stock.findByPk(stockId);
   
@@ -198,11 +207,11 @@ const getStockIndicators = async (stockId, type, period) => {
 /**
  * Get stock news with sentiment filtering
  * @param {number} stockId - Stock ID
- * @param {string} sentiment - Sentiment type
- * @param {Date} fromDate - Start date for news
+ * @param {Object} filter - Filter object with sentiment, from, to properties
  * @returns {Promise<Array>} News mentions for the stock
  */
-const getStockNews = async (stockId, sentiment, fromDate) => {
+const getStockNews = async (stockId, filter) => {
+  const { sentiment, from: fromDate, to: toDate } = filter || {};
   // Verify stock exists
   const stock = await db.Stock.findByPk(stockId);
   
@@ -229,11 +238,17 @@ const getStockNews = async (stockId, sentiment, fromDate) => {
     }
   }
   
-  // Add date filter if provided
-  if (fromDate) {
-    whereConditions.publicationDate = {
-      [Op.gte]: fromDate
-    };
+  // Add date range filtering if provided
+  if (fromDate || toDate) {
+    whereConditions.publicationDate = {};
+    
+    if (fromDate) {
+      whereConditions.publicationDate[Op.gte] = fromDate;
+    }
+    
+    if (toDate) {
+      whereConditions.publicationDate[Op.lte] = toDate;
+    }
   }
 
   // Get news mentions

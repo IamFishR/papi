@@ -113,7 +113,7 @@ module.exports = (sequelize) => {
     if (models.Exchange) {
       // Stock belongs to an exchange
       Stock.belongsTo(models.Exchange, {
-        foreignKey: 'exchange_id',
+        foreignKey: 'exchangeId',
         as: 'exchange',
       });
     }
@@ -121,7 +121,7 @@ module.exports = (sequelize) => {
     if (models.Sector) {
       // Stock belongs to a sector
       Stock.belongsTo(models.Sector, {
-        foreignKey: 'sector_id',
+        foreignKey: 'sectorId',
         as: 'sector',
       });
     }
@@ -129,7 +129,7 @@ module.exports = (sequelize) => {
     if (models.Currency) {
       // Stock belongs to a currency
       Stock.belongsTo(models.Currency, {
-        foreignKey: 'currency_id',
+        foreignKey: 'currencyId',
         as: 'currency',
       });
     }
