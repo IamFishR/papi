@@ -14,7 +14,7 @@ const router = express.Router();
 router.get(
   '/',
   authenticate,
-  validate(referenceValidation.getReferenceData, 'query'),
+  validate(referenceValidation.getReferenceData.query, 'query'),
   catchAsync(referenceController.getReferenceData)
 );
 

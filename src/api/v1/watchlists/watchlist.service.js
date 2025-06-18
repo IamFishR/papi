@@ -20,18 +20,13 @@ const getWatchlists = async (userId) => {
         model: db.Stock,
         as: 'stocks',
         through: {
-          attributes: ['positionOrder'],
+          attributes: ['notes', 'addedAt', 'priceAtAdd', 'targetPrice', 'stopLoss'],
           as: 'watchlistStock'
-        },
-        include: [
-          { model: db.Exchange, as: 'exchange' },
-          { model: db.Sector, as: 'sector' }
-        ]
+        }
       }
     ],
     order: [
-      ['name', 'ASC'],
-      [{ model: db.Stock, as: 'stocks' }, db.WatchlistStock, 'positionOrder', 'ASC']
+      ['name', 'ASC']
     ]
   });
 
@@ -94,17 +89,10 @@ const getWatchlistById = async (id, userId) => {
         model: db.Stock,
         as: 'stocks',
         through: {
-          attributes: ['positionOrder'],
+          attributes: ['notes', 'addedAt', 'priceAtAdd', 'targetPrice', 'stopLoss'],
           as: 'watchlistStock'
-        },
-        include: [
-          { model: db.Exchange, as: 'exchange' },
-          { model: db.Sector, as: 'sector' }
-        ]
+        }
       }
-    ],
-    order: [
-      [{ model: db.Stock, as: 'stocks' }, db.WatchlistStock, 'positionOrder', 'ASC']
     ]
   });
 
@@ -224,16 +212,10 @@ const addStockToWatchlist = async (watchlistId, stockId, userId) => {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Stock is already in the watchlist');
   }
 
-  // Get the current highest position order
-  const highestOrder = await db.WatchlistStock.max('positionOrder', {
-    where: { watchlistId }
-  });
-
-  // Add stock to watchlist with next position order
+  // Add stock to watchlist
   await db.WatchlistStock.create({
     watchlistId,
-    stockId,
-    positionOrder: (highestOrder || 0) + 1
+    stockId
   });
 
   // Get the updated watchlist
@@ -243,25 +225,17 @@ const addStockToWatchlist = async (watchlistId, stockId, userId) => {
 /**
  * Add multiple stocks to a watchlist
  * @param {number} watchlistId - Watchlist ID
- * @param {Array} stocks - Array of stock IDs or objects with stockId and positionOrder
+ * @param {Array} stocks - Array of stock IDs or objects with stockId
  * @returns {Promise<Array>} Created watchlist stock entries
  */
 const addStocksToWatchlist = async (watchlistId, stocks) => {
-  // Get the current highest position order
-  const highestOrder = await db.WatchlistStock.max('positionOrder', {
-    where: { watchlistId }
-  }) || 0;
-
   // Prepare watchlist stock entries
-  const watchlistStockEntries = stocks.map((stock, index) => {
+  const watchlistStockEntries = stocks.map((stock) => {
     const stockId = typeof stock === 'object' ? stock.stockId : stock;
-    const positionOrder = typeof stock === 'object' && stock.positionOrder ? 
-      stock.positionOrder : highestOrder + index + 1;
 
     return {
       watchlistId,
-      stockId,
-      positionOrder
+      stockId
     };
   });
 
@@ -304,61 +278,10 @@ const removeStockFromWatchlist = async (watchlistId, stockId, userId) => {
   // Remove stock from watchlist
   await watchlistStock.destroy();
 
-  // Reorder remaining stocks to fill the gap
-  const remainingStocks = await db.WatchlistStock.findAll({
-    where: { watchlistId },
-    order: [['positionOrder', 'ASC']]
-  });
-
-  // Update position orders
-  const updatePromises = remainingStocks.map((stock, index) => {
-    return stock.update({ positionOrder: index + 1 });
-  });
-
-  await Promise.all(updatePromises);
-
   // Get the updated watchlist
   return getWatchlistById(watchlistId, userId);
 };
 
-/**
- * Reorder stocks in a watchlist
- * @param {number} watchlistId - Watchlist ID
- * @param {Array} stockOrders - Array of objects with stockId and positionOrder
- * @param {string} userId - User ID
- * @returns {Promise<Object>} Updated watchlist
- */
-const reorderWatchlistStocks = async (watchlistId, stockOrders, userId) => {
-  // Find watchlist by ID and userId
-  const watchlist = await db.Watchlist.findOne({
-    where: {
-      id: watchlistId,
-      userId
-    }
-  });
-
-  if (!watchlist) {
-    throw new ApiError(StatusCodes.NOT_FOUND, 'Watchlist not found');
-  }
-
-  // Update position orders for each stock
-  const updatePromises = stockOrders.map((stockOrder) => {
-    return db.WatchlistStock.update(
-      { positionOrder: stockOrder.positionOrder },
-      {
-        where: {
-          watchlistId,
-          stockId: stockOrder.stockId
-        }
-      }
-    );
-  });
-
-  await Promise.all(updatePromises);
-
-  // Get the updated watchlist
-  return getWatchlistById(watchlistId, userId);
-};
 
 module.exports = {
   getWatchlists,
@@ -367,6 +290,5 @@ module.exports = {
   updateWatchlist,
   deleteWatchlist,
   addStockToWatchlist,
-  removeStockFromWatchlist,
-  reorderWatchlistStocks
+  removeStockFromWatchlist
 };

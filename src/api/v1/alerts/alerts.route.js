@@ -14,15 +14,23 @@ const router = express.Router();
 router.get(
   '/',
   authenticate,
-  validate(alertsValidation.getAlerts, 'query'),
+  validate(alertsValidation.listAlerts.query, 'query'),
   catchAsync(alertsController.getAlerts)
+);
+
+// Get alert history with date filtering
+router.get(
+  '/history',
+  authenticate,
+  validate(alertsValidation.getAlertHistory.query, 'query'),
+  catchAsync(alertsController.getAlertHistory)
 );
 
 // Create new alert
 router.post(
   '/',
   authenticate,
-  validate(alertsValidation.createAlert),
+  validate(alertsValidation.createAlert.body),
   catchAsync(alertsController.createAlert)
 );
 
@@ -30,7 +38,7 @@ router.post(
 router.get(
   '/:id',
   authenticate,
-  validate(alertsValidation.getAlertById, 'params'),
+  validate(alertsValidation.getAlertById.params, 'params'),
   catchAsync(alertsController.getAlertById)
 );
 
@@ -38,8 +46,8 @@ router.get(
 router.put(
   '/:id',
   authenticate,
-  validate(alertsValidation.updateAlertParams, 'params'),
-  validate(alertsValidation.updateAlert),
+  validate(alertsValidation.updateAlert.params, 'params'),
+  validate(alertsValidation.updateAlert.body),
   catchAsync(alertsController.updateAlert)
 );
 
@@ -47,16 +55,8 @@ router.put(
 router.delete(
   '/:id',
   authenticate,
-  validate(alertsValidation.deleteAlert, 'params'),
+  validate(alertsValidation.deleteAlert.params, 'params'),
   catchAsync(alertsController.deleteAlert)
-);
-
-// Get alert history with date filtering
-router.get(
-  '/history',
-  authenticate,
-  validate(alertsValidation.getAlertHistory, 'query'),
-  catchAsync(alertsController.getAlertHistory)
 );
 
 module.exports = router;

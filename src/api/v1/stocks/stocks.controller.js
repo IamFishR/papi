@@ -130,11 +130,69 @@ const getStockIndicators = catchAsync(async (req, res) => {
   );
 });
 
+/**
+ * Create a new stock
+ * @route POST /api/v1/stocks
+ * @admin
+ */
+const createStock = catchAsync(async (req, res) => {
+  const stockData = req.body;
+  
+  const stock = await stockService.createStock(stockData);
+  
+  return apiResponse.success(
+    res,
+    StatusCodes.CREATED,
+    successMessages.STOCK_CREATED,
+    stock
+  );
+});
+
+/**
+ * Update an existing stock
+ * @route PUT /api/v1/stocks/:id
+ * @admin
+ */
+const updateStock = catchAsync(async (req, res) => {
+  const stockId = req.params.id;
+  const updateData = req.body;
+  
+  const stock = await stockService.updateStock(stockId, updateData);
+  
+  return apiResponse.success(
+    res,
+    StatusCodes.OK,
+    successMessages.STOCK_UPDATED,
+    stock
+  );
+});
+
+/**
+ * Soft delete a stock
+ * @route DELETE /api/v1/stocks/:id
+ * @admin
+ */
+const deleteStock = catchAsync(async (req, res) => {
+  const stockId = req.params.id;
+  
+  const stock = await stockService.deleteStock(stockId);
+  
+  return apiResponse.success(
+    res,
+    StatusCodes.OK,
+    successMessages.STOCK_DELETED,
+    stock
+  );
+});
+
 module.exports = {
   getStocks,
   getStockById,
   getStockPrices,
   addStockPrices,
   getStockNews,
-  getStockIndicators
+  getStockIndicators,
+  createStock,
+  updateStock,
+  deleteStock
 };

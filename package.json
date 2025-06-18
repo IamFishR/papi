@@ -13,7 +13,14 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "makemigration": "node ./node_modules/sequelize-auto-migrations/bin/makemigration.js",
-    "migrate": "node ./node_modules/sequelize-auto-migrations/bin/runmigration.js"
+    "migrate": "node ./node_modules/sequelize-auto-migrations/bin/runmigration.js",
+    "db:migrate": "sequelize-cli db:migrate",
+    "db:migrate:undo": "sequelize-cli db:migrate:undo",
+    "db:migrate:undo:all": "sequelize-cli db:migrate:undo:all",
+    "db:seed": "sequelize-cli db:seed:all",
+    "db:seed:undo": "sequelize-cli db:seed:undo:all",
+    "migration:create": "sequelize-cli migration:generate --name",
+    "seeder:create": "sequelize-cli seed:generate --name"
   },
   "keywords": [],
   "author": "",

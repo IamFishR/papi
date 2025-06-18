@@ -1,0 +1,65 @@
+/**
+ * Sector model definition
+ */
+const { DataTypes } = require('sequelize');
+
+module.exports = (sequelize) => {
+  const Sector = sequelize.define('Sector', {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    code: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+      unique: true,
+      validate: {
+        notEmpty: true,
+        len: [1, 20],
+      },
+    },
+    name: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      validate: {
+        notEmpty: true,
+        len: [1, 100],
+      },
+    },
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+      field: 'is_active',
+    },
+  }, {
+    tableName: 'st_sectors',
+    timestamps: true,
+    underscored: true,
+    indexes: [
+      {
+        fields: ['code'],
+      },
+      {
+        fields: ['is_active'],
+      },
+    ],
+  });
+
+  Sector.associate = (models) => {
+    // Sector has many stocks
+    if (models.Stock) {
+      Sector.hasMany(models.Stock, {
+        foreignKey: 'sector_id',
+        as: 'stocks',
+      });
+    }
+  };
+
+  return Sector;
+};

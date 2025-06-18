@@ -14,7 +14,7 @@ const router = express.Router();
 router.get(
   '/',
   authenticate,
-  validate(watchlistsValidation.getWatchlists, 'query'),
+  validate(watchlistsValidation.listWatchlists.query, 'query'),
   catchAsync(watchlistsController.getWatchlists)
 );
 
@@ -22,7 +22,7 @@ router.get(
 router.post(
   '/',
   authenticate,
-  validate(watchlistsValidation.createWatchlist),
+  validate(watchlistsValidation.createWatchlist.body),
   catchAsync(watchlistsController.createWatchlist)
 );
 
@@ -30,8 +30,8 @@ router.post(
 router.put(
   '/:id',
   authenticate,
-  validate(watchlistsValidation.updateWatchlistParams, 'params'),
-  validate(watchlistsValidation.updateWatchlist),
+  validate(watchlistsValidation.updateWatchlist.params, 'params'),
+  validate(watchlistsValidation.updateWatchlist.body),
   catchAsync(watchlistsController.updateWatchlist)
 );
 
@@ -39,23 +39,24 @@ router.put(
 router.delete(
   '/:id',
   authenticate,
-  validate(watchlistsValidation.deleteWatchlistParams, 'params'),
+  validate(watchlistsValidation.deleteWatchlist.params, 'params'),
   catchAsync(watchlistsController.deleteWatchlist)
 );
 
 // Add stock to watchlist
 router.post(
-  '/:id/stocks/:stockId',
+  '/:id/stocks/:stock_id',
   authenticate,
-  validate(watchlistsValidation.addStockToWatchlistParams, 'params'),
+  validate(watchlistsValidation.addStockToWatchlist.params, 'params'),
+  validate(watchlistsValidation.addStockToWatchlist.body),
   catchAsync(watchlistsController.addStockToWatchlist)
 );
 
 // Remove stock from watchlist
 router.delete(
-  '/:id/stocks/:stockId',
+  '/:id/stocks/:stock_id',
   authenticate,
-  validate(watchlistsValidation.removeStockFromWatchlistParams, 'params'),
+  validate(watchlistsValidation.removeStockFromWatchlist.params, 'params'),
   catchAsync(watchlistsController.removeStockFromWatchlist)
 );
 

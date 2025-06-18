@@ -27,6 +27,17 @@ module.exports = {
   ORDER_CANCELLED: 'Order cancelled successfully.',
   ORDER_COMPLETED: 'Order completed successfully.',
   
+  // Stock related messages
+  STOCK_CREATED: 'Stock created successfully.',
+  STOCK_UPDATED: 'Stock updated successfully.',
+  STOCK_DELETED: 'Stock deleted successfully.',
+  STOCK_FETCHED: 'Stock retrieved successfully.',
+  STOCKS_FETCHED: 'Stocks retrieved successfully.',
+  STOCK_PRICES_FETCHED: 'Stock prices retrieved successfully.',
+  STOCK_PRICES_ADDED: 'Stock prices added successfully.',
+  STOCK_NEWS_FETCHED: 'Stock news retrieved successfully.',
+  STOCK_INDICATORS_FETCHED: 'Stock indicators retrieved successfully.',
+  
   // General CRUD operation messages
   CREATED: 'Resource created successfully.',
   UPDATED: 'Resource updated successfully.',

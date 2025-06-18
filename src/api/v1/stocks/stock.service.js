@@ -43,11 +43,7 @@ const getStocks = async (filter, options) => {
     where: whereConditions,
     limit,
     offset,
-    order: [[sortBy || 'symbol', sortOrder || 'ASC']],
-    include: [
-      { model: db.Exchange, as: 'exchange' },
-      { model: db.Sector, as: 'sector' }
-    ]
+    order: [[sortBy || 'symbol', sortOrder || 'ASC']]
   });
 
   // Return paginated result
@@ -66,12 +62,7 @@ const getStocks = async (filter, options) => {
  * @returns {Promise<Object>} Stock with related data
  */
 const getStockById = async (id) => {
-  const stock = await db.Stock.findByPk(id, {
-    include: [
-      { model: db.Exchange, as: 'exchange' },
-      { model: db.Sector, as: 'sector' }
-    ]
-  });
+  const stock = await db.Stock.findByPk(id);
 
   if (!stock) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Stock not found');
@@ -258,11 +249,191 @@ const getStockNews = async (stockId, sentiment, fromDate) => {
   return news;
 };
 
+/**
+ * Validation helpers for foreign key existence
+ */
+
+/**
+ * Check if exchange exists and is active
+ * @param {number} exchangeId - Exchange ID to validate
+ * @returns {Promise<boolean>} True if exchange exists and is active
+ */
+const validateExchangeExists = async (exchangeId) => {
+  if (!exchangeId) return true; // null is allowed for optional fields
+  
+  const exchange = await db.Exchange.findOne({
+    where: { 
+      id: exchangeId,
+      isActive: true 
+    }
+  });
+  
+  return !!exchange;
+};
+
+/**
+ * Check if sector exists and is active
+ * @param {number} sectorId - Sector ID to validate
+ * @returns {Promise<boolean>} True if sector exists and is active
+ */
+const validateSectorExists = async (sectorId) => {
+  if (!sectorId) return true; // null is allowed for optional fields
+  
+  const sector = await db.Sector.findOne({
+    where: { 
+      id: sectorId,
+      isActive: true 
+    }
+  });
+  
+  return !!sector;
+};
+
+/**
+ * Check if currency exists and is active
+ * @param {number} currencyId - Currency ID to validate
+ * @returns {Promise<boolean>} True if currency exists and is active
+ */
+const validateCurrencyExists = async (currencyId) => {
+  if (!currencyId) return true; // null is allowed for optional fields
+  
+  const currency = await db.Currency.findOne({
+    where: { 
+      id: currencyId,
+      isActive: true 
+    }
+  });
+  
+  return !!currency;
+};
+
+/**
+ * Validate all foreign key dependencies
+ * @param {Object} stockData - Stock data with foreign keys
+ * @returns {Promise<void>} Throws error if any dependency is invalid
+ */
+const validateStockDependencies = async (stockData) => {
+  const { exchangeId, sectorId, currencyId } = stockData;
+  
+  // Validate exchange (required)
+  if (exchangeId && !(await validateExchangeExists(exchangeId))) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid exchange ID. Exchange not found or inactive.');
+  }
+  
+  // Validate sector (optional)
+  if (sectorId && !(await validateSectorExists(sectorId))) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid sector ID. Sector not found or inactive.');
+  }
+  
+  // Validate currency (required)
+  if (currencyId && !(await validateCurrencyExists(currencyId))) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid currency ID. Currency not found or inactive.');
+  }
+};
+
+/**
+ * Create a new stock
+ * @param {Object} stockData - Stock data to create
+ * @returns {Promise<Object>} Created stock
+ */
+const createStock = async (stockData) => {
+  // Validate foreign key dependencies
+  await validateStockDependencies(stockData);
+  
+  // Check if stock symbol already exists
+  const existingStock = await db.Stock.findOne({
+    where: { symbol: stockData.symbol }
+  });
+  
+  if (existingStock) {
+    throw new ApiError(StatusCodes.CONFLICT, 'Stock with this symbol already exists');
+  }
+  
+  // Create the stock
+  const stock = await db.Stock.create(stockData);
+  
+  // Return stock with associations
+  return await db.Stock.findByPk(stock.id, {
+    include: [
+      { model: db.Exchange, as: 'exchange' },
+      { model: db.Sector, as: 'sector' },
+      { model: db.Currency, as: 'currency' }
+    ]
+  });
+};
+
+/**
+ * Update an existing stock
+ * @param {number} id - Stock ID
+ * @param {Object} updateData - Data to update
+ * @returns {Promise<Object>} Updated stock
+ */
+const updateStock = async (id, updateData) => {
+  // Check if stock exists
+  const stock = await db.Stock.findByPk(id);
+  
+  if (!stock) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Stock not found');
+  }
+  
+  // Validate foreign key dependencies
+  await validateStockDependencies(updateData);
+  
+  // Check if symbol is being updated and already exists
+  if (updateData.symbol && updateData.symbol !== stock.symbol) {
+    const existingStock = await db.Stock.findOne({
+      where: { 
+        symbol: updateData.symbol,
+        id: { [Op.ne]: id } // Exclude current stock
+      }
+    });
+    
+    if (existingStock) {
+      throw new ApiError(StatusCodes.CONFLICT, 'Stock with this symbol already exists');
+    }
+  }
+  
+  // Update the stock
+  await stock.update(updateData);
+  
+  // Return updated stock with associations
+  return await db.Stock.findByPk(id, {
+    include: [
+      { model: db.Exchange, as: 'exchange' },
+      { model: db.Sector, as: 'sector' },
+      { model: db.Currency, as: 'currency' }
+    ]
+  });
+};
+
+/**
+ * Soft delete a stock
+ * @param {number} id - Stock ID
+ * @returns {Promise<Object>} Deleted stock
+ */
+const deleteStock = async (id) => {
+  // Check if stock exists
+  const stock = await db.Stock.findByPk(id);
+  
+  if (!stock) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Stock not found');
+  }
+  
+  // Soft delete by setting isActive to false
+  await stock.update({ isActive: false });
+  
+  return stock;
+};
+
 module.exports = {
   getStocks,
   getStockById,
   getStockPrices,
   addStockPrices,
   getStockIndicators,
-  getStockNews
+  getStockNews,
+  createStock,
+  updateStock,
+  deleteStock,
+  validateStockDependencies
 };

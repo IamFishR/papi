@@ -187,8 +187,8 @@ const getAlertHistory = {
   query: Joi.object().keys({
     from: Joi.date().iso(),
     to: Joi.date().iso().min(Joi.ref('from')),
-    alert_id: Joi.string().uuid(),
-    stock_id: Joi.string().uuid(),
+    alert_id: Joi.number().integer(),
+    stock_id: Joi.number().integer(),
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(20),
     sortBy: Joi.string().valid('triggered_at').default('triggered_at'),

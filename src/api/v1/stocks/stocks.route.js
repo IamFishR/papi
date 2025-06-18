@@ -3,6 +3,7 @@
  */
 const express = require('express');
 const authenticate = require('../../../core/middlewares/authenticate');
+const authorize = require('../../../core/middlewares/authorize');
 const validate = require('../../../core/middlewares/requestValidator');
 const stocksValidation = require('./stocks.validation');
 const stocksController = require('./stocks.controller');
@@ -14,7 +15,7 @@ const router = express.Router();
 router.get(
   '/',
   authenticate,
-  validate(stocksValidation.getStocks, 'query'),
+  validate(stocksValidation.listStocks.query, 'query'),
   catchAsync(stocksController.getStocks)
 );
 
@@ -22,7 +23,7 @@ router.get(
 router.get(
   '/:id',
   authenticate,
-  validate(stocksValidation.getStockById, 'params'),
+  validate(stocksValidation.getStockById.params, 'params'),
   catchAsync(stocksController.getStockById)
 );
 
@@ -30,8 +31,8 @@ router.get(
 router.get(
   '/:id/prices',
   authenticate,
-  validate(stocksValidation.getStockPricesParams, 'params'),
-  validate(stocksValidation.getStockPrices, 'query'),
+  validate(stocksValidation.getStockPrices.params, 'params'),
+  validate(stocksValidation.getStockPrices.query, 'query'),
   catchAsync(stocksController.getStockPrices)
 );
 
@@ -39,8 +40,8 @@ router.get(
 router.post(
   '/:id/prices',
   authenticate,
-  validate(stocksValidation.addStockPricesParams, 'params'),
-  validate(stocksValidation.addStockPrices),
+  validate(stocksValidation.addStockPrices.params, 'params'),
+  validate(stocksValidation.addStockPrices.body),
   catchAsync(stocksController.addStockPrices)
 );
 
@@ -48,8 +49,8 @@ router.post(
 router.get(
   '/:id/news',
   authenticate,
-  validate(stocksValidation.getStockNewsParams, 'params'),
-  validate(stocksValidation.getStockNews, 'query'),
+  validate(stocksValidation.getStockNews.params, 'params'),
+  validate(stocksValidation.getStockNews.query, 'query'),
   catchAsync(stocksController.getStockNews)
 );
 
@@ -57,9 +58,37 @@ router.get(
 router.get(
   '/:id/indicators',
   authenticate,
-  validate(stocksValidation.getStockIndicatorsParams, 'params'),
-  validate(stocksValidation.getStockIndicators, 'query'),
+  validate(stocksValidation.getStockIndicators.params, 'params'),
+  validate(stocksValidation.getStockIndicators.query, 'query'),
   catchAsync(stocksController.getStockIndicators)
+);
+
+// Create stock (admin only)
+router.post(
+  '/',
+  authenticate,
+  authorize('admin'),
+  validate(stocksValidation.createStock.body),
+  catchAsync(stocksController.createStock)
+);
+
+// Update stock (admin only)
+router.put(
+  '/:id',
+  authenticate,
+  authorize('admin'),
+  validate(stocksValidation.updateStock.params, 'params'),
+  validate(stocksValidation.updateStock.body),
+  catchAsync(stocksController.updateStock)
+);
+
+// Soft delete stock (admin only)
+router.delete(
+  '/:id',
+  authenticate,
+  authorize('admin'),
+  validate(stocksValidation.deleteStock.params, 'params'),
+  catchAsync(stocksController.deleteStock)
 );
 
 module.exports = router;

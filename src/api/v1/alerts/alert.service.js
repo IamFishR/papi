@@ -46,7 +46,7 @@ const getAlerts = async (filter, options, userId) => {
     where: whereConditions,
     limit,
     offset,
-    order: [[sortBy || 'createdAt', sortOrder || 'DESC']],
+    order: [[sortBy || 'created_at', sortOrder || 'DESC']],
     include: [
       { model: db.Stock, as: 'stock' },
       { model: db.TriggerType, as: 'triggerType' },
@@ -55,7 +55,7 @@ const getAlerts = async (filter, options, userId) => {
       { model: db.IndicatorType, as: 'indicatorType' },
       { model: db.IndicatorCondition, as: 'indicatorCondition' },
       { model: db.SentimentType, as: 'sentimentType' },
-      { model: db.AlertFrequency, as: 'alertFrequency' },
+      { model: db.AlertFrequency, as: 'frequency' },
       { model: db.ConditionLogicType, as: 'conditionLogic' }
     ]
   });
@@ -226,7 +226,7 @@ const getAlertHistory = async (filter, options, userId) => {
     where: whereConditions,
     limit,
     offset,
-    order: [[sortBy || 'triggeredAt', sortOrder || 'DESC']],
+    order: [[sortBy || 'triggered_at', sortOrder || 'DESC']],
     include: [
       { 
         model: db.Alert, 
@@ -287,7 +287,7 @@ const processAlerts = async () => {
         
         // Update last triggered time
         await alert.update({
-          lastTriggeredAt: new Date()
+          lastTriggered: new Date()
         });
         
         triggeredAlerts.push(alert);
@@ -343,7 +343,7 @@ const checkPriceAlertConditions = async (alert) => {
   // Get latest stock price
   const latestPrice = await db.StockPrice.findOne({
     where: { stockId: alert.stockId },
-    order: [['priceTimestamp', 'DESC']]
+    order: [['created_at', 'DESC']]
   });
   
   if (!latestPrice) {
@@ -366,9 +366,9 @@ const checkPriceAlertConditions = async (alert) => {
       const previousPrice = await db.StockPrice.findOne({
         where: { 
           stockId: alert.stockId,
-          priceTimestamp: { [Op.lt]: latestPrice.priceTimestamp }
+          created_at: { [Op.lt]: latestPrice.created_at }
         },
-        order: [['priceTimestamp', 'DESC']]
+        order: [['created_at', 'DESC']]
       });
       
       if (!previousPrice) {
@@ -382,9 +382,9 @@ const checkPriceAlertConditions = async (alert) => {
       const prevPrice = await db.StockPrice.findOne({
         where: { 
           stockId: alert.stockId,
-          priceTimestamp: { [Op.lt]: latestPrice.priceTimestamp }
+          created_at: { [Op.lt]: latestPrice.created_at }
         },
-        order: [['priceTimestamp', 'DESC']]
+        order: [['created_at', 'DESC']]
       });
       
       if (!prevPrice) {
@@ -407,7 +407,7 @@ const checkVolumeAlertConditions = async (alert) => {
   // Get latest stock volume
   const latestPrice = await db.StockPrice.findOne({
     where: { stockId: alert.stockId },
-    order: [['priceTimestamp', 'DESC']]
+    order: [['created_at', 'DESC']]
   });
   
   if (!latestPrice || !latestPrice.volume) {
@@ -418,12 +418,12 @@ const checkVolumeAlertConditions = async (alert) => {
   const historicalPrices = await db.StockPrice.findAll({
     where: { 
       stockId: alert.stockId,
-      priceTimestamp: { 
-        [Op.lt]: latestPrice.priceTimestamp,
-        [Op.gte]: new Date(latestPrice.priceTimestamp - 30 * 24 * 60 * 60 * 1000) // 30 days before
+      created_at: { 
+        [Op.lt]: latestPrice.created_at,
+        [Op.gte]: new Date(latestPrice.created_at - 30 * 24 * 60 * 60 * 1000) // 30 days before
       }
     },
-    order: [['priceTimestamp', 'DESC']]
+    order: [['created_at', 'DESC']]
   });
   
   if (historicalPrices.length === 0) {
@@ -467,7 +467,7 @@ const checkIndicatorAlertConditions = async (alert) => {
       indicatorTypeId: alert.indicatorTypeId,
       periodLength: alert.indicatorPeriod || 14
     },
-    order: [['calculationDate', 'DESC']]
+    order: [['calculation_date', 'DESC']]
   });
   
   if (!latestIndicator) {
@@ -492,9 +492,9 @@ const checkIndicatorAlertConditions = async (alert) => {
           stockId: alert.stockId,
           indicatorTypeId: alert.indicatorTypeId,
           periodLength: alert.indicatorPeriod || 14,
-          calculationDate: { [Op.lt]: latestIndicator.calculationDate }
+          calculation_date: { [Op.lt]: latestIndicator.calculationDate }
         },
-        order: [['calculationDate', 'DESC']]
+        order: [['calculation_date', 'DESC']]
       });
       
       if (!previousIndicator) {
@@ -510,9 +510,9 @@ const checkIndicatorAlertConditions = async (alert) => {
           stockId: alert.stockId,
           indicatorTypeId: alert.indicatorTypeId,
           periodLength: alert.indicatorPeriod || 14,
-          calculationDate: { [Op.lt]: latestIndicator.calculationDate }
+          calculation_date: { [Op.lt]: latestIndicator.calculationDate }
         },
-        order: [['calculationDate', 'DESC']]
+        order: [['calculation_date', 'DESC']]
       });
       
       if (!prevIndicator) {
@@ -539,11 +539,11 @@ const checkNewsAlertConditions = async (alert) => {
       // If sentiment type is specified, filter by it
       ...(alert.sentimentTypeId && { sentimentTypeId: alert.sentimentTypeId }),
       // Get news after the last triggered time or from the past 24 hours
-      publicationDate: { 
-        [Op.gte]: alert.lastTriggeredAt || new Date(Date.now() - 24 * 60 * 60 * 1000)
+      publication_date: { 
+        [Op.gte]: alert.lastTriggered || new Date(Date.now() - 24 * 60 * 60 * 1000)
       }
     },
-    order: [['publicationDate', 'DESC']]
+    order: [['publication_date', 'DESC']]
   });
   
   // If there's any news matching the criteria, trigger the alert
@@ -564,7 +564,7 @@ const createAlertHistory = async (alert) => {
     case 'stock_price':
       stockPrice = await db.StockPrice.findOne({
         where: { stockId: alert.stockId },
-        order: [['priceTimestamp', 'DESC']]
+        order: [['created_at', 'DESC']]
       });
       triggerValue = stockPrice ? stockPrice.price : null;
       break;
@@ -572,7 +572,7 @@ const createAlertHistory = async (alert) => {
     case 'volume':
       stockPrice = await db.StockPrice.findOne({
         where: { stockId: alert.stockId },
-        order: [['priceTimestamp', 'DESC']]
+        order: [['created_at', 'DESC']]
       });
       triggerValue = stockPrice ? stockPrice.volume : null;
       break;
@@ -584,7 +584,7 @@ const createAlertHistory = async (alert) => {
           indicatorTypeId: alert.indicatorTypeId,
           periodLength: alert.indicatorPeriod || 14
         },
-        order: [['calculationDate', 'DESC']]
+        order: [['calculation_date', 'DESC']]
       });
       triggerValue = indicator ? indicator.value : null;
       break;
@@ -628,7 +628,7 @@ const queueAlertNotification = async (alert) => {
     case 'stock_price':
       const stockPrice = await db.StockPrice.findOne({
         where: { stockId: alert.stockId },
-        order: [['priceTimestamp', 'DESC']]
+        order: [['created_at', 'DESC']]
       });
       
       notificationContent = `${stock.symbol} price alert: Current price $${stockPrice.price} is ${alert.thresholdCondition.name} your threshold of $${alert.thresholdValue}`;

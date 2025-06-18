@@ -23,7 +23,7 @@ const listStocks = {
  */
 const getStockById = {
   params: Joi.object().keys({
-    id: Joi.string().uuid().required(),
+    id: Joi.number().integer().positive().required(),
   }),
 };
 
@@ -32,7 +32,7 @@ const getStockById = {
  */
 const getStockPrices = {
   params: Joi.object().keys({
-    id: Joi.string().uuid().required(),
+    id: Joi.number().integer().positive().required(),
   }),
   query: Joi.object().keys({
     from: Joi.date().iso(),
@@ -48,7 +48,7 @@ const getStockPrices = {
  */
 const addStockPrices = {
   params: Joi.object().keys({
-    id: Joi.string().uuid().required(),
+    id: Joi.number().integer().positive().required(),
   }),
   body: Joi.object().keys({
     price: Joi.number().positive().required(),
@@ -66,7 +66,7 @@ const addStockPrices = {
  */
 const getStockNews = {
   params: Joi.object().keys({
-    id: Joi.string().uuid().required(),
+    id: Joi.number().integer().positive().required(),
   }),
   query: Joi.object().keys({
     sentiment: Joi.string().valid('positive', 'negative', 'neutral', 'any'),
@@ -81,7 +81,7 @@ const getStockNews = {
  */
 const getStockIndicators = {
   params: Joi.object().keys({
-    id: Joi.string().uuid().required(),
+    id: Joi.number().integer().positive().required(),
   }),
   query: Joi.object().keys({
     type: Joi.string().valid('RSI', 'SMA', 'EMA', 'MACD', 'bollinger_bands'),
@@ -93,6 +93,56 @@ const getStockIndicators = {
   }),
 };
 
+/**
+ * Schema for creating a stock
+ */
+const createStock = {
+  body: Joi.object().keys({
+    symbol: Joi.string().min(1).max(20).required(),
+    companyName: Joi.string().min(1).max(100).required(),
+    description: Joi.string().allow('', null),
+    exchangeId: Joi.number().integer().positive().required(),
+    sectorId: Joi.number().integer().positive().allow(null),
+    currencyId: Joi.number().integer().positive().required(),
+    marketCap: Joi.number().integer().positive().allow(null),
+    peRatio: Joi.number().positive().allow(null),
+    dividendYield: Joi.number().min(0).max(100).allow(null),
+    beta: Joi.number().allow(null),
+    isActive: Joi.boolean().default(true),
+  }),
+};
+
+/**
+ * Schema for updating a stock
+ */
+const updateStock = {
+  params: Joi.object().keys({
+    id: Joi.number().integer().positive().required(),
+  }),
+  body: Joi.object().keys({
+    symbol: Joi.string().min(1).max(20),
+    companyName: Joi.string().min(1).max(100),
+    description: Joi.string().allow('', null),
+    exchangeId: Joi.number().integer().positive(),
+    sectorId: Joi.number().integer().positive().allow(null),
+    currencyId: Joi.number().integer().positive(),
+    marketCap: Joi.number().integer().positive().allow(null),
+    peRatio: Joi.number().positive().allow(null),
+    dividendYield: Joi.number().min(0).max(100).allow(null),
+    beta: Joi.number().allow(null),
+    isActive: Joi.boolean(),
+  }).min(1),
+};
+
+/**
+ * Schema for deleting a stock
+ */
+const deleteStock = {
+  params: Joi.object().keys({
+    id: Joi.number().integer().positive().required(),
+  }),
+};
+
 module.exports = {
   listStocks,
   getStockById,
@@ -100,4 +150,7 @@ module.exports = {
   addStockPrices,
   getStockNews,
   getStockIndicators,
+  createStock,
+  updateStock,
+  deleteStock,
 };

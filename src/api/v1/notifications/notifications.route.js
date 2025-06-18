@@ -14,7 +14,7 @@ const router = express.Router();
 router.get(
   '/',
   authenticate,
-  validate(notificationsValidation.getNotifications, 'query'),
+  validate(notificationsValidation.listNotifications.query, 'query'),
   catchAsync(notificationsController.getNotifications)
 );
 
@@ -22,7 +22,7 @@ router.get(
 router.put(
   '/:id/acknowledge',
   authenticate,
-  validate(notificationsValidation.acknowledgeNotificationParams, 'params'),
+  validate(notificationsValidation.acknowledgeNotification.params, 'params'),
   catchAsync(notificationsController.acknowledgeNotification)
 );
 

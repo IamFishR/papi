@@ -23,7 +23,7 @@ router.post(
   '/',
   authenticate,
   authorize('admin'),
-  validate(userValidation.createUser),
+  validate(userValidation.createUser.body),
   catchAsync(userController.createUser)
 );
 
@@ -32,7 +32,7 @@ router.get(
   '/',
   authenticate,
   authorize('admin'),
-  validate(userValidation.listUsers),
+  validate(userValidation.listUsers.query, 'query'),
   catchAsync(userController.getUsers)
 );
 
@@ -40,7 +40,7 @@ router.get(
 router.get(
   '/:id',
   authenticate,
-  validate(userValidation.getUserById),
+  validate(userValidation.getUserById.params, 'params'),
   catchAsync(userController.getUserById)
 );
 
@@ -48,7 +48,8 @@ router.get(
 router.put(
   '/:id',
   authenticate,
-  validate(userValidation.updateUser),
+  validate(userValidation.updateUser.params, 'params'),
+  validate(userValidation.updateUser.body),
   catchAsync(userController.updateUser)
 );
 
@@ -57,7 +58,7 @@ router.delete(
   '/:id',
   authenticate,
   authorize('admin'),
-  validate(userValidation.deleteUser),
+  validate(userValidation.deleteUser.params, 'params'),
   catchAsync(userController.deleteUser)
 );
 
@@ -66,7 +67,7 @@ router.patch(
   '/:id/restore',
   authenticate,
   authorize('admin'),
-  validate(userValidation.restoreUser),
+  validate(userValidation.restoreUser.params, 'params'),
   catchAsync(userController.restoreUser)
 );
 
