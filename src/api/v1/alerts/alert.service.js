@@ -90,7 +90,7 @@ const getAlertById = async (id, userId) => {
       { model: db.IndicatorType, as: 'indicatorType' },
       { model: db.IndicatorCondition, as: 'indicatorCondition' },
       { model: db.SentimentType, as: 'sentimentType' },
-      { model: db.AlertFrequency, as: 'alertFrequency' },
+      { model: db.AlertFrequency, as: 'frequency' },
       { model: db.ConditionLogicType, as: 'conditionLogic' }
     ]
   });
@@ -118,10 +118,15 @@ const createAlert = async (alertData, userId) => {
     }
   }
 
-  // Add userId to alert data
+  // Add userId and set default values for required fields
   const alertWithUserId = {
     ...alertData,
-    userId
+    userId,
+    // Set default values for required fields if not provided
+    notificationMethodId: alertData.notificationMethodId || 1, // Default to first notification method
+    statusId: alertData.statusId || 1, // Default to active status
+    priorityId: alertData.priorityId || 2, // Default to medium priority
+    startDate: alertData.startDate || new Date(), // Default to current date
   };
 
   // Create alert

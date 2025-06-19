@@ -57,7 +57,7 @@ module.exports = (sequelize) => {
       field: 'adjusted_close',
     },
     volume: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.DECIMAL(15, 4),
       allowNull: true,
     },
     dataSource: {

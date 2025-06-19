@@ -25,17 +25,17 @@ const createAlert = {
     name: Joi.string().required().min(1).max(255),
     description: Joi.string().allow('', null),
     
-    // Alert trigger configuration
-    trigger_type_id: Joi.number().integer().required(),
-    stock_id: Joi.string().uuid(),
+    // Alert trigger configuration (camelCase from frontend)
+    triggerTypeId: Joi.number().integer().required(),
+    stockId: Joi.number().integer().positive(),
     
     // Price alert fields - required if trigger_type is 'stock_price'
-    threshold_value: Joi.number().when('trigger_type_id', {
+    priceThreshold: Joi.number().when('triggerTypeId', {
       is: 1, // stock_price trigger type ID
       then: Joi.required(),
       otherwise: Joi.optional()
     }),
-    threshold_condition_id: Joi.number().integer().when('trigger_type_id', {
+    thresholdConditionId: Joi.number().integer().when('triggerTypeId', {
       is: 1, // stock_price trigger type ID
       then: Joi.required(),
       otherwise: Joi.optional()
@@ -43,55 +43,61 @@ const createAlert = {
     percentage_change: Joi.number().precision(2),
     
     // Volume alert fields - required if trigger_type is 'volume'
-    volume_threshold: Joi.number().integer().when('trigger_type_id', {
+    volume_threshold: Joi.number().when('triggerTypeId', {
       is: 2, // volume trigger type ID
       then: Joi.required(),
       otherwise: Joi.optional()
     }),
-    volume_condition_id: Joi.number().integer().when('trigger_type_id', {
+    volume_condition_id: Joi.number().integer().when('triggerTypeId', {
       is: 2, // volume trigger type ID
       then: Joi.required(),
       otherwise: Joi.optional()
     }),
     
     // Technical indicator fields - required if trigger_type is 'technical_indicator'
-    indicator_type_id: Joi.number().integer().when('trigger_type_id', {
+    indicator_type_id: Joi.number().integer().when('triggerTypeId', {
       is: 3, // technical_indicator trigger type ID
       then: Joi.required(),
       otherwise: Joi.optional()
     }),
     indicator_period: Joi.number().integer().min(1).max(200).default(14),
-    indicator_threshold: Joi.number().precision(4).when('trigger_type_id', {
+    indicator_threshold: Joi.number().precision(4).when('triggerTypeId', {
       is: 3, // technical_indicator trigger type ID
       then: Joi.required(),
       otherwise: Joi.optional()
     }),
-    indicator_condition_id: Joi.number().integer().when('trigger_type_id', {
+    indicator_condition_id: Joi.number().integer().when('triggerTypeId', {
       is: 3, // technical_indicator trigger type ID
       then: Joi.required(),
       otherwise: Joi.optional()
     }),
     
     // News alert fields - required if trigger_type is 'news'
-    news_keywords: Joi.string().when('trigger_type_id', {
+    news_keywords: Joi.string().when('triggerTypeId', {
       is: 4, // news trigger type ID
       then: Joi.required(),
       otherwise: Joi.optional()
     }),
-    sentiment_type_id: Joi.number().integer().when('trigger_type_id', {
+    sentiment_type_id: Joi.number().integer().when('triggerTypeId', {
       is: 4, // news trigger type ID
       then: Joi.required(),
       otherwise: Joi.optional()
     }),
     
-    // Alert behavior
-    alert_frequency_id: Joi.number().integer().required(),
-    is_active: Joi.boolean().default(true),
+    // Alert behavior (camelCase from frontend)
+    frequencyId: Joi.number().integer().required(),
+    isActive: Joi.boolean().default(true),
     cooldown_minutes: Joi.number().integer().min(0).default(0),
+    
+    // Additional required fields with defaults
+    notificationMethodId: Joi.number().integer().default(1),
+    statusId: Joi.number().integer().default(1),
+    priorityId: Joi.number().integer().default(2),
+    startDate: Joi.date().default(new Date()),
     
     // Conditional logic for multi-condition alerts
     condition_logic_id: Joi.number().integer(),
-    parent_alert_id: Joi.string().uuid().allow(null),
+    parent_alert_id: Joi.number().integer().positive().allow(null),
     
     // Scheduling
     schedule_time: Joi.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
@@ -100,11 +106,11 @@ const createAlert = {
     ),
   }).custom((value, helpers) => {
     // Custom validation to ensure required fields are present based on trigger type
-    const { trigger_type_id, stock_id } = value;
+    const { triggerTypeId, stockId } = value;
     
     // Stock ID is required for all trigger types except portfolio
-    if (trigger_type_id !== 5 && !stock_id) { // 5 = portfolio trigger type ID
-      return helpers.error('any.custom', { message: 'stock_id is required for this trigger type' });
+    if (triggerTypeId !== 5 && !stockId) { // 5 = portfolio trigger type ID
+      return helpers.error('any.custom', { message: 'stockId is required for this trigger type' });
     }
     
     return value;
@@ -131,17 +137,17 @@ const updateAlert = {
     name: Joi.string().min(1).max(255),
     description: Joi.string().allow('', null),
     
-    // Alert trigger configuration
-    trigger_type_id: Joi.number().integer(),
-    stock_id: Joi.string().uuid(),
+    // Alert trigger configuration (camelCase from frontend)
+    triggerTypeId: Joi.number().integer(),
+    stockId: Joi.number().integer().positive(),
     
     // Price alert fields
-    threshold_value: Joi.number(),
-    threshold_condition_id: Joi.number().integer(),
+    priceThreshold: Joi.number(),
+    thresholdConditionId: Joi.number().integer(),
     percentage_change: Joi.number().precision(2),
     
     // Volume alert fields
-    volume_threshold: Joi.number().integer(),
+    volume_threshold: Joi.number(),
     volume_condition_id: Joi.number().integer(),
     
     // Technical indicator fields
@@ -154,14 +160,20 @@ const updateAlert = {
     news_keywords: Joi.string(),
     sentiment_type_id: Joi.number().integer(),
     
-    // Alert behavior
-    alert_frequency_id: Joi.number().integer(),
-    is_active: Joi.boolean(),
+    // Alert behavior (camelCase from frontend)
+    frequencyId: Joi.number().integer(),
+    isActive: Joi.boolean(),
     cooldown_minutes: Joi.number().integer().min(0),
+    
+    // Additional fields
+    notificationMethodId: Joi.number().integer(),
+    statusId: Joi.number().integer(),
+    priorityId: Joi.number().integer(),
+    startDate: Joi.date(),
     
     // Conditional logic for multi-condition alerts
     condition_logic_id: Joi.number().integer(),
-    parent_alert_id: Joi.string().uuid().allow(null),
+    parent_alert_id: Joi.number().integer().positive().allow(null),
     
     // Scheduling
     schedule_time: Joi.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
