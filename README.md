@@ -1,6 +1,6 @@
-# Express.js API Project
+# Stock Trading & Portfolio Management API
 
-A modular and scalable REST API built with Express.js and Sequelize ORM.
+A comprehensive REST API for stock trading, portfolio management, and market analysis built with Express.js and Sequelize ORM. Features advanced alerting system, trading journal, watchlist management, and real-time stock data tracking.
 
 ## Project Structure
 
@@ -9,10 +9,12 @@ A modular and scalable REST API built with Express.js and Sequelize ORM.
 ├── /src
 │   ├── /api                     # API versioning root
 │   │   ├── /v1                  # Version 1 of your API
-│   │   │   ├── /auth            # Authentication feature
-│   │   │   ├── /users           # Users feature
-│   │   │   ├── /products        # Products feature
-│   │   │   ├── /orders          # Orders feature
+│   │   │   ├── /auth            # Authentication & authorization
+│   │   │   ├── /users           # User management
+│   │   │   ├── /stocks          # Stock data & management
+│   │   │   ├── /alerts          # Stock alert system
+│   │   │   ├── /journal         # Trading journal & tags
+│   │   │   ├── /watchlist       # Watchlist management
 │   │   │   └── index.js         # Aggregates all v1 routes
 │   │   ├── /v2                  # Future Version 2 of your API
 │   │   └── index.js             # Main API router
@@ -121,6 +123,57 @@ This project uses the following packages to provide a robust and secure API:
 - **sequelize-cli** (^6.6.3) - Sequelize command line interface
 - **sequelize-auto-migrations** - Automatic migration generation for Sequelize
 
+## Features
+
+### 🔐 Authentication & User Management
+- JWT-based authentication with access and refresh tokens
+- User registration with email verification
+- Password reset functionality
+- Role-based authorization (user/admin)
+- User profile management with soft delete support
+- Rate limiting for security
+
+### 📈 Stock Management System
+- Comprehensive stock data with CRUD operations
+- Stock search and filtering by symbol, exchange, sector, market cap
+- Historical stock price data with date range filtering
+- Stock metrics tracking (P/E ratio, dividend yield, beta)
+- Exchange, sector, and currency reference data
+
+### 🚨 Advanced Alert System
+- Multi-condition alerts with various trigger types:
+  - Price threshold alerts (above/below)
+  - Volume-based alerts
+  - Technical indicator alerts (RSI, moving averages)
+  - News sentiment alerts
+- Alert scheduling with frequency controls and cooldown periods
+- Alert history tracking and status management
+- Priority levels and risk tolerance settings
+
+### 📊 Trading Journal
+- Comprehensive trade entry logging
+- Custom tag system for trade categorization
+- Trade performance tracking with P&L calculations
+- Advanced filtering and pagination
+- User-specific tag management
+
+### 👀 Watchlist Management
+- Personal watchlist creation and management
+- Stock addition/removal from watchlists
+- Portfolio tracking and organization
+
+### 📰 News & Market Data
+- Stock news tracking with sentiment analysis
+- News mention monitoring for specific stocks
+- Market data integration capabilities
+
+### 🔧 Technical Features
+- RESTful API with versioning support
+- Comprehensive input validation using Joi
+- Advanced error handling and logging
+- Database migrations and seeding system
+- Security headers and XSS protection
+
 ## API Endpoints
 
 ### Authentication
@@ -139,19 +192,44 @@ This project uses the following packages to provide a robust and secure API:
 - `DELETE /api/v1/users/:id` - Delete user
 - `GET /api/v1/users/me` - Get current user profile
 
-### Products
-- `GET /api/v1/products` - Get all products
-- `GET /api/v1/products/:id` - Get product by ID
-- `POST /api/v1/products` - Create new product (admin only)
-- `PATCH /api/v1/products/:id` - Update product (admin only)
-- `DELETE /api/v1/products/:id` - Delete product (admin only)
+### Stocks
+- `GET /api/v1/stocks` - Get all stocks with filtering
+- `GET /api/v1/stocks/:id` - Get stock by ID
+- `POST /api/v1/stocks` - Create new stock (admin only)
+- `PUT /api/v1/stocks/:id` - Update stock (admin only)
+- `DELETE /api/v1/stocks/:id` - Delete stock (admin only)
+- `GET /api/v1/stocks/:id/prices` - Get stock price history
+- `POST /api/v1/stocks/:id/prices` - Add stock price data
 
-### Orders
-- `GET /api/v1/orders` - Get all orders (admin) or user's orders
-- `GET /api/v1/orders/:id` - Get order by ID
-- `POST /api/v1/orders` - Create new order
-- `PATCH /api/v1/orders/:id` - Update order status (admin only)
-- `DELETE /api/v1/orders/:id` - Cancel order
+### Alerts
+- `GET /api/v1/alerts` - Get user's alerts
+- `GET /api/v1/alerts/:id` - Get alert by ID
+- `POST /api/v1/alerts` - Create new alert
+- `PUT /api/v1/alerts/:id` - Update alert
+- `DELETE /api/v1/alerts/:id` - Delete alert
+- `POST /api/v1/alerts/:id/trigger` - Manually trigger alert
+- `GET /api/v1/alerts/history` - Get alert history
+
+### Trading Journal
+- `POST /api/v1/journal/trades` - Create a new trade entry
+- `GET /api/v1/journal/trades` - Get all trade entries (with pagination & filtering)
+- `GET /api/v1/journal/trades/:tradeId` - Get trade entry by ID
+- `PUT /api/v1/journal/trades/:tradeId` - Update trade entry
+- `DELETE /api/v1/journal/trades/:tradeId` - Delete trade entry
+
+### Custom Tags
+- `POST /api/v1/journal/tags` - Create a new custom tag
+- `GET /api/v1/journal/tags?type={tagType}` - Get user's tags by type
+- `PUT /api/v1/journal/tags/:tagId` - Update custom tag
+- `DELETE /api/v1/journal/tags/:tagId` - Delete custom tag
+
+### Watchlist
+- `GET /api/v1/watchlist` - Get user's watchlists
+- `POST /api/v1/watchlist` - Create new watchlist
+- `PUT /api/v1/watchlist/:id` - Update watchlist
+- `DELETE /api/v1/watchlist/:id` - Delete watchlist
+- `POST /api/v1/watchlist/:id/stocks` - Add stock to watchlist
+- `DELETE /api/v1/watchlist/:id/stocks/:stockId` - Remove stock from watchlist
 
 ## Testing
 
@@ -169,34 +247,70 @@ To run specific Journal API tests:
 npm run test:journal
 ```
 
+### Database Setup
+
+Run database migrations and seed data:
+
+```bash
+# Run migrations
+npm run migrate
+
+# Run seeders (optional)
+npm run seed
+```
+
+The seeding system includes intelligent duplicate prevention and will skip existing data.
+
 ### API Testing with Postman
 
 A Postman collection is provided for manual API testing:
 
 1. Import the collection from `src/tests/postman/journal-api.postman_collection.json`
 2. Set up your environment variables:
-   - `baseUrl`: Your API base URL (e.g., `http://localhost:3000`)
+   - `baseUrl`: Your API base URL (e.g., `http://localhost:8080`)
    - `token`: JWT token obtained from login
    - `tradeId`: ID of a trade entry to test
    - `tagId`: ID of a custom tag to test
 3. Execute the requests in the collection to test the API endpoints
 
-#### Journal API Endpoints
+## Database Schema
 
-The Journal API includes the following endpoints for testing:
+The API uses MySQL with the following key entities:
 
-**Trade Journal Entries:**
-- `POST /api/v1/journal/trades` - Create a new trade entry
-- `GET /api/v1/journal/trades` - Get all trade entries (with pagination & filtering)
-- `GET /api/v1/journal/trades/:tradeId` - Get trade entry by ID
-- `PUT /api/v1/journal/trades/:tradeId` - Update trade entry
-- `DELETE /api/v1/journal/trades/:tradeId` - Delete trade entry
+### Core Tables
+- **Users** - User accounts with role-based permissions
+- **Stocks** - Stock information with market data
+- **StockPrices** - Historical price data with technical indicators
+- **Exchanges** - Stock exchange reference data
+- **Sectors** - Industry sector classifications
+- **Currencies** - Supported currencies
 
-**User Custom Tags:**
-- `POST /api/v1/journal/tags` - Create a new custom tag
-- `GET /api/v1/journal/tags?type={tagType}` - Get user's tags by type
-- `PUT /api/v1/journal/tags/:tagId` - Update custom tag
-- `DELETE /api/v1/journal/tags/:tagId` - Delete custom tag
+### Alert System
+- **Alerts** - User-defined stock alerts with conditions
+- **AlertHistory** - Alert trigger history and logs
+- **AlertConditions** - Alert condition configurations
+- **AlertFrequencies** - Alert frequency settings
+
+### Trading Journal
+- **TradeEntries** - Individual trade records
+- **CustomTags** - User-defined tags for categorization
+- **TagTypes** - Tag type definitions
+
+### Watchlist & News
+- **Watchlists** - User watchlist collections
+- **WatchlistStocks** - Stock-watchlist relationships
+- **NewsArticles** - News article storage
+- **StockNews** - Stock-news relationships
+
+## Recent Updates
+
+### Latest Features (v1.2.0)
+- Enhanced alert validation with camelCase field support
+- Improved stock validation with positive value enforcement
+- Volume field precision improvements (DECIMAL type)
+- Foreign key naming standardization
+- Smart seeder system with duplicate prevention
+- Active record filtering capabilities
 
 ## License
 
