@@ -6,14 +6,16 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    // Check if exchanges already exist to avoid duplicates
-    const [results] = await queryInterface.sequelize.query('SELECT COUNT(*) as count FROM st_exchanges');
-    if (results[0].count > 0) {
-      console.log('Exchanges already exist, skipping seeder');
-      return;
-    }
+    // Get existing exchange codes to avoid duplicates
+    const [existingExchanges] = await queryInterface.sequelize.query('SELECT code FROM st_exchanges');
+    const existingCodes = existingExchanges.map(ex => ex.code);
     
-    await queryInterface.bulkInsert('st_exchanges', [
+    console.log(`Found ${existingCodes.length} existing exchanges: ${existingCodes.join(', ')}`);
+    
+    const exchangesToInsert = [];
+    
+    // Define all exchanges
+    const allExchanges = [
       {
         code: 'NASDAQ',
         name: 'National Association of Securities Dealers Automated Quotations',
@@ -183,10 +185,26 @@ module.exports = {
         created_at: new Date(),
         updated_at: new Date()
       }
-    ]);
+    ];
+
+    // Filter out existing exchanges
+    allExchanges.forEach(exchange => {
+      if (!existingCodes.includes(exchange.code)) {
+        exchangesToInsert.push(exchange);
+      }
+    });
+
+    if (exchangesToInsert.length === 0) {
+      console.log('All exchanges already exist, skipping seeder');
+      return;
+    }
+
+    console.log(`Inserting ${exchangesToInsert.length} new exchanges: ${exchangesToInsert.map(ex => ex.code).join(', ')}`);
+    
+    await queryInterface.bulkInsert('st_exchanges', exchangesToInsert);
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.bulkDelete('st_exchanges', null, {});
   }
 };
