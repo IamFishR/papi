@@ -122,7 +122,7 @@ const createAlert = {
  */
 const getAlertById = {
   params: Joi.object().keys({
-    id: Joi.string().uuid().required(),
+    id: Joi.number().integer().required(),
   }),
 };
 
@@ -131,7 +131,7 @@ const getAlertById = {
  */
 const updateAlert = {
   params: Joi.object().keys({
-    id: Joi.string().uuid().required(),
+    id: Joi.number().integer().required(),
   }),
   body: Joi.object().keys({
     name: Joi.string().min(1).max(255),
@@ -188,7 +188,7 @@ const updateAlert = {
  */
 const deleteAlert = {
   params: Joi.object().keys({
-    id: Joi.string().uuid().required(),
+    id: Joi.number().integer().required(),
   }),
 };
 
