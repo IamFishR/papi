@@ -15,6 +15,9 @@ const watchlistsRoutes = require('./watchlists/watchlists.route');
 const notificationsRoutes = require('./notifications/notifications.route');
 const referenceRoutes = require('./reference/reference.route');
 
+// System management routes
+const systemRoutes = require('./system/system.route');
+
 const router = express.Router();
 
 // Register routes
@@ -30,5 +33,8 @@ router.use('/alerts', alertsRoutes);
 router.use('/watchlists', watchlistsRoutes);
 router.use('/notifications', notificationsRoutes);
 router.use('/reference', referenceRoutes);
+
+// Register system management routes
+router.use('/system', systemRoutes);
 
 module.exports = router;
