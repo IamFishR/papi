@@ -1,6 +1,6 @@
 /**
  * Seed data for API endpoints
- * Contains essential NSE data endpoints for the trading bot
+ * Contains essential NSE data endpoints for stock data fetching
  */
 'use strict';
 
