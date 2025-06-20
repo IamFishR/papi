@@ -6,6 +6,7 @@ const logger = require('../../config/logger');
 const nseService = require('../../services/external/nseService');
 const stockUpdateService = require('../../services/stock/stockUpdateService');
 const priceService = require('../../services/stock/priceService');
+const db = require('../../database/models');
 
 class StockDataWorker {
   constructor() {
@@ -20,6 +21,28 @@ class StockDataWorker {
       lastFailure: null,
       totalStocksProcessed: 0,
       totalPricesProcessed: 0
+    };
+    
+    // Add per-bot-type statistics tracking
+    this.botTypeStats = {
+      stockBot: {
+        executions: 0,
+        successes: 0,
+        failures: 0,
+        lastExecution: null
+      },
+      priceBot: {
+        executions: 0,
+        successes: 0,
+        failures: 0,
+        lastExecution: null
+      },
+      fullDataBot: {
+        executions: 0,
+        successes: 0,
+        failures: 0,
+        lastExecution: null
+      }
     };
   }
 
@@ -53,10 +76,32 @@ class StockDataWorker {
 
     const executionId = ++this.executionCount;
     const startTime = Date.now();
+    const startedAt = new Date();
     
     this.isProcessing = true;
-    this.lastExecutionTime = new Date();
+    this.lastExecutionTime = startedAt;
     this.stats.totalExecutions++;
+    
+    // Track this execution for the stockBot type
+    this.botTypeStats.stockBot.executions++;
+    this.botTypeStats.stockBot.lastExecution = startedAt;
+
+    // Create database execution record
+    let executionRecord = null;
+    try {
+      executionRecord = await db.BotExecution.create({
+        executionId,
+        botType: 'stockBot',
+        executionType: 'stocks',
+        status: 'success', // Will be updated based on result
+        startedAt,
+        isManual: false,
+        memoryUsage: process.memoryUsage(),
+      });
+    } catch (dbError) {
+      logger.error('Failed to create execution record:', dbError);
+      // Continue execution even if DB logging fails
+    }
 
     try {
       logger.info(`Starting stock data fetch execution #${executionId}`);
@@ -110,6 +155,11 @@ class StockDataWorker {
       this.stats.lastSuccess = new Date();
       this.stats.totalStocksProcessed += totalStocksProcessed;
 
+      // Update bot-type specific statistics
+      this.botTypeStats.stockBot.executions++;
+      this.botTypeStats.stockBot.successes++;
+      this.botTypeStats.stockBot.lastExecution = new Date();
+
       const result = {
         success: true,
         executionId,
@@ -129,6 +179,27 @@ class StockDataWorker {
         }
       };
 
+      // Update database execution record
+      if (executionRecord) {
+        try {
+          await executionRecord.markCompleted('success', {
+            endpointsProcessed: nseResults.successful.length,
+            stocksProcessed: totalStocksProcessed,
+            stocksCreated: stockResults.reduce((sum, r) => sum + (r.result?.created || 0), 0),
+            stocksUpdated: stockResults.reduce((sum, r) => sum + (r.result?.updated || 0), 0),
+            nseResults: {
+              successful: nseResults.successful.length,
+              failed: nseResults.failed.length,
+              total: nseResults.summary.total
+            },
+            processingResults: stockResults,
+            executionSummary: result.summary,
+          });
+        } catch (dbError) {
+          logger.error('Failed to update execution record:', dbError);
+        }
+      }
+
       logger.info(`Stock data fetch execution #${executionId} completed successfully`, result.summary);
       return result;
 
@@ -138,6 +209,20 @@ class StockDataWorker {
       // Update error statistics
       this.stats.failedExecutions++;
       this.stats.lastFailure = new Date();
+
+      // Update bot-type specific statistics
+      this.botTypeStats.stockBot.executions++;
+      this.botTypeStats.stockBot.failures++;
+      this.botTypeStats.stockBot.lastExecution = new Date();
+
+      // Update database execution record for failure
+      if (executionRecord) {
+        try {
+          await executionRecord.markFailed(error);
+        } catch (dbError) {
+          logger.error('Failed to update execution record with error:', dbError);
+        }
+      }
 
       logger.error(`Stock data fetch execution #${executionId} failed:`, {
         error: error.message,
@@ -170,10 +255,28 @@ class StockDataWorker {
 
     const executionId = ++this.executionCount;
     const startTime = Date.now();
+    const startedAt = new Date();
     
     this.isProcessing = true;
-    this.lastExecutionTime = new Date();
+    this.lastExecutionTime = startedAt;
     this.stats.totalExecutions++;
+
+    // Create database execution record
+    let executionRecord = null;
+    try {
+      executionRecord = await db.BotExecution.create({
+        executionId,
+        botType: 'priceBot',
+        executionType: 'prices',
+        status: 'success', // Will be updated based on result
+        startedAt,
+        isManual: false,
+        memoryUsage: process.memoryUsage(),
+      });
+    } catch (dbError) {
+      logger.error('Failed to create execution record:', dbError);
+      // Continue execution even if DB logging fails
+    }
 
     try {
       logger.info(`Starting price data fetch execution #${executionId}`);
@@ -227,6 +330,10 @@ class StockDataWorker {
       this.stats.lastSuccess = new Date();
       this.stats.totalPricesProcessed += totalPricesProcessed;
 
+      // Update bot-type specific statistics
+      this.botTypeStats.priceBot.successes++;
+      this.botTypeStats.priceBot.lastExecution = new Date();
+
       const result = {
         success: true,
         executionId,
@@ -246,6 +353,27 @@ class StockDataWorker {
         }
       };
 
+      // Update database execution record
+      if (executionRecord) {
+        try {
+          await executionRecord.markCompleted('success', {
+            endpointsProcessed: nseResults.successful.length,
+            pricesProcessed: totalPricesProcessed,
+            pricesCreated: priceResults.reduce((sum, r) => sum + (r.result?.created || 0), 0),
+            pricesUpdated: priceResults.reduce((sum, r) => sum + (r.result?.updated || 0), 0),
+            nseResults: {
+              successful: nseResults.successful.length,
+              failed: nseResults.failed.length,
+              total: nseResults.summary.total
+            },
+            processingResults: priceResults,
+            executionSummary: result.summary,
+          });
+        } catch (dbError) {
+          logger.error('Failed to update execution record:', dbError);
+        }
+      }
+
       logger.info(`Price data fetch execution #${executionId} completed successfully`, result.summary);
       return result;
 
@@ -255,6 +383,19 @@ class StockDataWorker {
       // Update error statistics
       this.stats.failedExecutions++;
       this.stats.lastFailure = new Date();
+
+      // Update bot-type specific statistics
+      this.botTypeStats.priceBot.failures++;
+      this.botTypeStats.priceBot.lastExecution = new Date();
+
+      // Update database execution record for failure
+      if (executionRecord) {
+        try {
+          await executionRecord.markFailed(error);
+        } catch (dbError) {
+          logger.error('Failed to update execution record with error:', dbError);
+        }
+      }
 
       logger.error(`Price data fetch execution #${executionId} failed:`, {
         error: error.message,
@@ -287,10 +428,28 @@ class StockDataWorker {
 
     const executionId = ++this.executionCount;
     const startTime = Date.now();
+    const startedAt = new Date();
     
     this.isProcessing = true;
-    this.lastExecutionTime = new Date();
+    this.lastExecutionTime = startedAt;
     this.stats.totalExecutions++;
+
+    // Create database execution record
+    let executionRecord = null;
+    try {
+      executionRecord = await db.BotExecution.create({
+        executionId,
+        botType: 'fullDataBot',
+        executionType: 'all',
+        status: 'success', // Will be updated based on result
+        startedAt,
+        isManual: false,
+        memoryUsage: process.memoryUsage(),
+      });
+    } catch (dbError) {
+      logger.error('Failed to create execution record:', dbError);
+      // Continue execution even if DB logging fails
+    }
 
     try {
       logger.info(`Starting full data fetch execution #${executionId}`);
@@ -357,6 +516,10 @@ class StockDataWorker {
       this.stats.totalStocksProcessed += totalStocksProcessed;
       this.stats.totalPricesProcessed += totalPricesProcessed;
 
+      // Update bot-type specific statistics
+      this.botTypeStats.fullDataBot.successes++;
+      this.botTypeStats.fullDataBot.lastExecution = new Date();
+
       const result = {
         success: true,
         executionId,
@@ -379,6 +542,30 @@ class StockDataWorker {
         }
       };
 
+      // Update database execution record
+      if (executionRecord) {
+        try {
+          await executionRecord.markCompleted('success', {
+            endpointsProcessed: nseResults.successful.length,
+            stocksProcessed: totalStocksProcessed,
+            stocksCreated: stockResults.reduce((sum, r) => sum + (r.result?.created || 0), 0),
+            stocksUpdated: stockResults.reduce((sum, r) => sum + (r.result?.updated || 0), 0),
+            pricesProcessed: totalPricesProcessed,
+            pricesCreated: priceResults.reduce((sum, r) => sum + (r.result?.created || 0), 0),
+            pricesUpdated: priceResults.reduce((sum, r) => sum + (r.result?.updated || 0), 0),
+            nseResults: {
+              successful: nseResults.successful.length,
+              failed: nseResults.failed.length,
+              total: nseResults.summary.total
+            },
+            processingResults: { stockResults, priceResults },
+            executionSummary: result.summary,
+          });
+        } catch (dbError) {
+          logger.error('Failed to update execution record:', dbError);
+        }
+      }
+
       logger.info(`Full data fetch execution #${executionId} completed successfully`, result.summary);
       return result;
 
@@ -388,6 +575,19 @@ class StockDataWorker {
       // Update error statistics
       this.stats.failedExecutions++;
       this.stats.lastFailure = new Date();
+
+      // Update bot-type specific statistics
+      this.botTypeStats.fullDataBot.failures++;
+      this.botTypeStats.fullDataBot.lastExecution = new Date();
+
+      // Update database execution record for failure
+      if (executionRecord) {
+        try {
+          await executionRecord.markFailed(error);
+        } catch (dbError) {
+          logger.error('Failed to update execution record with error:', dbError);
+        }
+      }
 
       logger.error(`Full data fetch execution #${executionId} failed:`, {
         error: error.message,
@@ -418,6 +618,7 @@ class StockDataWorker {
       lastExecutionTime: this.lastExecutionTime,
       executionCount: this.executionCount,
       stats: { ...this.stats },
+      botStats: { ...this.botTypeStats },
       services: {
         nse: 'available',
         stockUpdate: 'available',
@@ -458,6 +659,149 @@ class StockDataWorker {
   }
 
   /**
+   * Get historical execution data from database
+   * @param {Object} options - Query options
+   * @returns {Promise<Object>} Historical execution data
+   */
+  async getHistoricalStats(options = {}) {
+    try {
+      const { botType = null, days = 30, limit = 100 } = options;
+      
+      // Get overall statistics
+      const stats = await db.BotExecution.getStats({ botType, days });
+      
+      // Get success rates for each bot type
+      const botTypes = ['stockBot', 'priceBot', 'fullDataBot'];
+      const successRates = {};
+      
+      for (const type of botTypes) {
+        if (!botType || botType === type) {
+          successRates[type] = await db.BotExecution.getSuccessRate(type, days);
+        }
+      }
+      
+      // Get recent executions
+      const recentExecutions = await db.BotExecution.getRecentExecutions(botType, limit);
+      
+      // Get execution trends
+      const trends = botType ? 
+        await db.BotExecution.getExecutionTrends(botType, days) : 
+        {};
+      
+      // Get performance metrics
+      const performanceMetrics = {};
+      for (const type of botTypes) {
+        if (!botType || botType === type) {
+          performanceMetrics[type] = await db.BotExecution.getPerformanceMetrics(type, days);
+        }
+      }
+      
+      return {
+        summary: {
+          queryOptions: { botType, days, limit },
+          period: `Last ${days} days`,
+          timestamp: new Date()
+        },
+        statistics: stats,
+        successRates,
+        recentExecutions,
+        trends,
+        performanceMetrics,
+        currentStats: this.getStatus()
+      };
+    } catch (error) {
+      logger.error('Error getting historical stats:', error);
+      return {
+        error: error.message,
+        currentStats: this.getStatus(),
+        timestamp: new Date()
+      };
+    }
+  }
+
+  /**
+   * Trigger manual job execution with database logging
+   * @param {string} jobType - Type of job to trigger ('stocks', 'prices', 'all')
+   * @returns {Promise<Object>} Operation result
+   */
+  async triggerManualJob(jobType) {
+    try {
+      let result;
+      
+      switch (jobType) {
+        case 'stocks':
+          result = await this.fetchStockData();
+          if (result.success) {
+            // Update the database record to mark as manual
+            try {
+              await db.BotExecution.update(
+                { isManual: true, executionType: 'manual' },
+                {
+                  where: {
+                    executionId: result.executionId,
+                    botType: 'stockBot'
+                  },
+                  order: [['created_at', 'DESC']],
+                  limit: 1
+                }
+              );
+            } catch (dbError) {
+              logger.error('Failed to mark execution as manual:', dbError);
+            }
+          }
+          break;
+        case 'prices':
+          result = await this.fetchPriceData();
+          if (result.success) {
+            try {
+              await db.BotExecution.update(
+                { isManual: true, executionType: 'manual' },
+                {
+                  where: {
+                    executionId: result.executionId,
+                    botType: 'priceBot'
+                  },
+                  order: [['created_at', 'DESC']],
+                  limit: 1
+                }
+              );
+            } catch (dbError) {
+              logger.error('Failed to mark execution as manual:', dbError);
+            }
+          }
+          break;
+        case 'all':
+          result = await this.fetchAllData();
+          if (result.success) {
+            try {
+              await db.BotExecution.update(
+                { isManual: true, executionType: 'manual' },
+                {
+                  where: {
+                    executionId: result.executionId,
+                    botType: 'fullDataBot'
+                  },
+                  order: [['created_at', 'DESC']],
+                  limit: 1
+                }
+              );
+            } catch (dbError) {
+              logger.error('Failed to mark execution as manual:', dbError);
+            }
+          }
+          break;
+        default:
+          throw new Error('Invalid job type');
+      }
+      
+      return result;
+    } catch (error) {
+      logger.error('Error in manual job execution:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Reset worker statistics
    */
   resetStats() {
@@ -472,6 +816,28 @@ class StockDataWorker {
       totalPricesProcessed: 0
     };
     this.executionCount = 0;
+
+    // Reset per-bot-type statistics
+    this.botTypeStats = {
+      stockBot: {
+        executions: 0,
+        successes: 0,
+        failures: 0,
+        lastExecution: null
+      },
+      priceBot: {
+        executions: 0,
+        successes: 0,
+        failures: 0,
+        lastExecution: null
+      },
+      fullDataBot: {
+        executions: 0,
+        successes: 0,
+        failures: 0,
+        lastExecution: null
+      }
+    };
   }
 
   /**

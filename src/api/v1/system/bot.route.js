@@ -41,6 +41,12 @@ router.post('/trigger',
 // GET /api/v1/system/bot/stats - Get bot performance statistics
 router.get('/stats', botController.getBotStats);
 
+// GET /api/v1/system/bot/stats/historical - Get historical bot execution statistics
+router.get('/stats/historical', botController.getHistoricalStats);
+
+// GET /api/v1/system/bot/stats/history/:botType - Get execution history for specific bot type
+router.get('/stats/history/:botType', botController.getBotExecutionHistory);
+
 // GET /api/v1/system/bot/health - Get bot health check
 router.get('/health', botController.getBotHealth);
 

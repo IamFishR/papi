@@ -4,6 +4,7 @@
 const { StatusCodes } = require('http-status-codes');
 const { catchAsync } = require('../../../core/utils/catchAsync');
 const apiResponse = require('../../../core/utils/apiResponse');
+const logger = require('../../../config/logger');
 const botService = require('./bot.service');
 
 /**
@@ -99,6 +100,63 @@ const getBotStats = catchAsync(async (req, res) => {
 });
 
 /**
+ * Get historical bot execution statistics
+ * GET /api/v1/system/bot/stats/historical
+ * Query params: botType, days, limit, status
+ */
+const getHistoricalStats = catchAsync(async (req, res) => {
+  const { botType, days, limit, status } = req.query;
+  
+  const options = {};
+  if (botType) options.botType = botType;
+  if (days) options.days = parseInt(days, 10);
+  if (limit) options.limit = parseInt(limit, 10);
+  if (status) options.status = status;
+  
+  const stats = await botService.getHistoricalStats(options);
+  
+  return apiResponse.success(
+    res,
+    StatusCodes.OK,
+    'Historical bot statistics retrieved successfully',
+    stats
+  );
+});
+
+/**
+ * Get execution history for a specific bot type
+ * GET /api/v1/system/bot/stats/history/:botType
+ * Query params: days, limit, status
+ */
+const getBotExecutionHistory = catchAsync(async (req, res) => {
+  const { botType } = req.params;
+  const { days, limit, status } = req.query;
+  
+  // Validate botType
+  if (!['stockBot', 'priceBot', 'fullDataBot'].includes(botType)) {
+    return apiResponse.error(
+      res,
+      StatusCodes.BAD_REQUEST,
+      'Invalid bot type. Must be: stockBot, priceBot, or fullDataBot'
+    );
+  }
+  
+  const options = {};
+  if (days) options.days = parseInt(days, 10);
+  if (limit) options.limit = parseInt(limit, 10);
+  if (status) options.status = status;
+  
+  const history = await botService.getBotExecutionHistory(botType, options);
+  
+  return apiResponse.success(
+    res,
+    StatusCodes.OK,
+    `Execution history for ${botType} retrieved successfully`,
+    history
+  );
+});
+
+/**
  * Get bot health check
  * GET /api/v1/system/bot/health
  */
@@ -184,6 +242,8 @@ module.exports = {
   restartBot,
   triggerJob,
   getBotStats,
+  getHistoricalStats,
+  getBotExecutionHistory,
   getBotHealth,
   updateBotConfig,
   getMarketStatus,

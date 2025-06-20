@@ -4,7 +4,7 @@
 const { StatusCodes } = require('http-status-codes');
 const ApiError = require('../../../core/utils/ApiError');
 const logger = require('../../../config/logger');
-const { ApiEndpoint } = require('../../../database/models');
+const db = require('../../../database/models');
 
 // Import bot components
 let stockDataScheduler, stockDataWorker;
@@ -197,21 +197,9 @@ const triggerJob = async (jobType) => {
     }
 
     const startTime = Date.now();
-    let result;
-
-    switch (jobType) {
-      case 'stocks':
-        result = await stockDataWorker.fetchStockData();
-        break;
-      case 'prices':
-        result = await stockDataWorker.fetchPriceData();
-        break;
-      case 'all':
-        result = await stockDataWorker.fetchAllData();
-        break;
-      default:
-        throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid job type');
-    }
+    
+    // Use the new triggerManualJob method which handles database logging
+    const result = await stockDataWorker.triggerManualJob(jobType);
 
     const executionTime = Date.now() - startTime;
     logger.info(`Manual job execution completed: ${jobType}`, { executionTime, result });
@@ -270,6 +258,7 @@ const getBotStats = async () => {
         failedExecutions: workerStatus.stats.failedExecutions,
         averageExecutionTime: workerStatus.stats.averageExecutionTime
       },
+      botStats: workerStatus.botStats || {},
       detailed: detailedStats,
       timestamp: new Date().toISOString()
     };
@@ -278,6 +267,69 @@ const getBotStats = async () => {
     throw new ApiError(
       StatusCodes.INTERNAL_SERVER_ERROR,
       'Failed to retrieve bot statistics',
+      null,
+      error.stack
+    );
+  }
+};
+
+/**
+ * Get historical bot execution statistics from database
+ * @param {Object} options - Query options
+ * @returns {Promise<Object>} Historical statistics
+ */
+const getHistoricalStats = async (options = {}) => {
+  try {
+    if (!stockDataWorker) {
+      throw new ApiError(StatusCodes.SERVICE_UNAVAILABLE, 'Bot worker not available');
+    }
+
+    const historicalStats = await stockDataWorker.getHistoricalStats(options);
+    
+    return {
+      ...historicalStats,
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    logger.error('Error getting historical statistics:', error);
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'Failed to retrieve historical statistics',
+      null,
+      error.stack
+    );
+  }
+};
+
+/**
+ * Get execution history for a specific bot type
+ * @param {string} botType - Bot type to filter by
+ * @param {Object} options - Additional query options
+ * @returns {Promise<Object>} Execution history
+ */
+const getBotExecutionHistory = async (botType, options = {}) => {
+  try {
+    const { days = 30, limit = 50, status } = options;
+    
+    const queryOptions = {
+      botType,
+      days,
+      limit,
+      status
+    };
+    
+    const historicalStats = await getHistoricalStats(queryOptions);
+    
+    return {
+      botType,
+      queryOptions,
+      ...historicalStats
+    };
+  } catch (error) {
+    logger.error(`Error getting execution history for ${botType}:`, error);
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      `Failed to retrieve execution history for ${botType}`,
       null,
       error.stack
     );
@@ -396,11 +448,20 @@ const getMarketStatus = async () => {
  */
 const getApiEndpoints = async () => {
   try {
-    const endpoints = await ApiEndpoint.findAll({
-      attributes: ['id', 'url', 'purpose', 'description', 'isActive', 'requestInfo', 'responseInfo', 'createdAt', 'updatedAt'],
+    // Access the model directly from db to ensure it's properly loaded
+    if (!db.ApiEndpoint) {
+      logger.error('ApiEndpoint model not found in db object');
+      throw new Error('ApiEndpoint model is not properly initialized');
+    }
+    
+    logger.info('Fetching API endpoints from database');
+    const endpoints = await db.ApiEndpoint.findAll({
+      attributes: ['id', 'url', 'purpose', 'description', 'isActive', 'requestInfo', 'responseInfo'],
       order: [['purpose', 'ASC']]
     });
 
+    logger.debug(`Retrieved ${endpoints.length} API endpoints`);
+    
     return {
       endpoints: endpoints.map(endpoint => ({
         ...endpoint.toJSON(),
@@ -416,7 +477,7 @@ const getApiEndpoints = async () => {
     throw new ApiError(
       StatusCodes.INTERNAL_SERVER_ERROR,
       'Failed to retrieve API endpoints',
-      null,
+      { modelLoaded: !!db.ApiEndpoint, errorType: error.name, errorMessage: error.message },
       error.stack
     );
   }
@@ -430,7 +491,7 @@ const getApiEndpoints = async () => {
  */
 const updateApiEndpoint = async (id, updates) => {
   try {
-    const endpoint = await ApiEndpoint.findByPk(id);
+    const endpoint = await db.ApiEndpoint.findByPk(id);
     if (!endpoint) {
       throw new ApiError(StatusCodes.NOT_FOUND, 'API endpoint not found');
     }
@@ -481,6 +542,8 @@ module.exports = {
   restartBot,
   triggerJob,
   getBotStats,
+  getHistoricalStats,
+  getBotExecutionHistory,
   getBotHealth,
   updateBotConfig,
   getMarketStatus,
