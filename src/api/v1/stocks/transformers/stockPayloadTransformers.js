@@ -42,7 +42,7 @@ const transformNSEMarketData = (payload) => {
         class_of_share: data.securityInfo?.classOfShare,
         derivatives_available: data.securityInfo?.derivatives === 'Yes',
         surveillance_stage: data.securityInfo?.surveillance?.surv,
-        surveillance_description: data.securityInfo?.surveillance?.desc,
+        surveillance_description: data.securityInfo?.surveillance?.desc || null,
         tick_size: data.priceInfo?.tickSize,
         temp_suspended_series: data.info.tempSuspendedSeries || [],
         active_series: data.info.activeSeries || [],

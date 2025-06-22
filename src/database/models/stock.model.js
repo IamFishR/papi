@@ -76,6 +76,15 @@ module.exports = (sequelize) => {
         key: 'id',
       },
     },
+    detailedSectorId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'detailed_sector_id',
+      references: {
+        model: 'st_detailed_sectors',
+        key: 'id',
+      },
+    },
     marketCap: {
       type: DataTypes.BIGINT,
       allowNull: true,
@@ -162,6 +171,14 @@ module.exports = (sequelize) => {
       Stock.belongsTo(models.Currency, {
         foreignKey: 'currencyId',
         as: 'currency',
+      });
+    }
+
+    if (models.DetailedSector) {
+      // Stock belongs to a detailed sector
+      Stock.belongsTo(models.DetailedSector, {
+        foreignKey: 'detailedSectorId',
+        as: 'detailedSector',
       });
     }
 

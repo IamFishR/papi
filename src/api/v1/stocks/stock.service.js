@@ -42,7 +42,7 @@ const getStocks = async (filter, options) => {
 
   // Apply detailed sector filter (new)
   if (filter.detailedSector) {
-    whereConditions.sectorDetailedId = filter.detailedSector;
+    whereConditions.detailedSectorId = filter.detailedSector;
   }
 
   // Apply ISIN filter
