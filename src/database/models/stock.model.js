@@ -28,6 +28,14 @@ module.exports = (sequelize) => {
         len: [1, 100],
       },
     },
+    isin: {
+      type: DataTypes.STRING(12),
+      allowNull: true,
+      unique: true,
+      validate: {
+        len: [12, 12],
+      },
+    },
     description: {
       type: DataTypes.TEXT,
       allowNull: true,
@@ -105,6 +113,9 @@ module.exports = (sequelize) => {
     indexes: [
       {
         fields: ['symbol'],
+      },
+      {
+        fields: ['isin'],
       },
       {
         fields: ['exchange_id'],

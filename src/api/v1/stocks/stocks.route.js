@@ -5,8 +5,10 @@ const express = require('express');
 const authenticate = require('../../../core/middlewares/authenticate');
 const authorize = require('../../../core/middlewares/authorize');
 const validate = require('../../../core/middlewares/requestValidator');
+const payloadTransformer = require('../../../core/middlewares/payloadTransformer');
 const stocksValidation = require('./stocks.validation');
 const stocksController = require('./stocks.controller');
+const { createTransformerForEndpoint } = require('./transformers/payloadFormatConfig');
 const { catchAsync } = require('../../../core/utils/catchAsync');
 
 const router = express.Router();
@@ -26,6 +28,16 @@ router.post(
   authorize('admin'),
   validate(stocksValidation.bulkUpdatePrices.body),
   catchAsync(stocksController.bulkUpdatePrices)
+);
+
+// Complete market data endpoint - handles stock info, prices, pre-market data, valuation, and index memberships
+router.post(
+  '/complete-market-data',
+  authenticate,
+  authorize('admin'),
+  payloadTransformer(createTransformerForEndpoint('/complete-market-data')),
+  validate(stocksValidation.completeMarketData.body),
+  catchAsync(stocksController.completeMarketData)
 );
 
 // Get stock by ID

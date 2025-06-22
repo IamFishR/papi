@@ -21,7 +21,7 @@ const getStocks = async (filter, options) => {
   const whereConditions = {
     isActive: true  // Only return active stocks
   };
-  
+
   // Apply search filter for symbol or company name
   if (filter.search) {
     whereConditions[Op.or] = [
@@ -29,15 +29,40 @@ const getStocks = async (filter, options) => {
       { companyName: { [Op.like]: `%${filter.search}%` } }
     ];
   }
-  
+
   // Apply exchange filter
   if (filter.exchange) {
     whereConditions.exchangeId = filter.exchange;
   }
-  
-  // Apply sector filter
+
+  // Apply sector filter (legacy)
   if (filter.sector) {
     whereConditions.sectorId = filter.sector;
+  }
+
+  // Apply detailed sector filter (new)
+  if (filter.detailedSector) {
+    whereConditions.sectorDetailedId = filter.detailedSector;
+  }
+
+  // Apply ISIN filter
+  if (filter.isin) {
+    whereConditions.isin = filter.isin;
+  }
+
+  // Apply FNO enabled filter
+  if (filter.fnoEnabled !== undefined) {
+    whereConditions.isFnoEnabled = filter.fnoEnabled;
+  }
+
+  // Apply trading status filter
+  if (filter.tradingStatus) {
+    whereConditions.tradingStatus = filter.tradingStatus;
+  }
+
+  // Apply surveillance stage filter
+  if (filter.surveillanceStage) {
+    whereConditions.surveillanceStage = filter.surveillanceStage;
   }
 
   // Execute query with includes for related data
@@ -46,7 +71,8 @@ const getStocks = async (filter, options) => {
     include: [
       { model: db.Exchange, as: 'exchange' },
       { model: db.Sector, as: 'sector' },
-      { model: db.Currency, as: 'currency' }
+      { model: db.Currency, as: 'currency' },
+      { model: db.DetailedSector, as: 'detailedSector' }
     ],
     limit,
     offset,
@@ -90,24 +116,24 @@ const getStockPrices = async (stockId, dateFilter) => {
   const { from: fromDate, to: toDate } = dateFilter || {};
   // Verify stock exists
   const stock = await db.Stock.findByPk(stockId);
-  
+
   if (!stock) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Stock not found');
   }
 
   // Prepare filter conditions
-  const whereConditions = { 
-    stockId: stockId 
+  const whereConditions = {
+    stockId: stockId
   };
-  
+
   // Add date range filtering if provided
   if (fromDate || toDate) {
     whereConditions.priceDate = {};
-    
+
     if (fromDate) {
       whereConditions.priceDate[Op.gte] = fromDate;
     }
-    
+
     if (toDate) {
       whereConditions.priceDate[Op.lte] = toDate;
     }
@@ -131,7 +157,7 @@ const getStockPrices = async (stockId, dateFilter) => {
 const addStockPrices = async (stockId, priceData) => {
   // Verify stock exists
   const stock = await db.Stock.findByPk(stockId);
-  
+
   if (!stock) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Stock not found');
   }
@@ -145,7 +171,7 @@ const addStockPrices = async (stockId, priceData) => {
   // Use bulkCreate with updateOnDuplicate to handle existing records
   const createdPrices = await db.StockPrice.bulkCreate(pricesWithStockId, {
     updateOnDuplicate: [
-      'price', 'volume', 'high', 'low', 'openPrice', 
+      'price', 'volume', 'high', 'low', 'openPrice',
       'closePrice', 'priceTimestamp'
     ]
   });
@@ -163,30 +189,30 @@ const getStockIndicators = async (stockId, filter) => {
   const { type, period } = filter || {};
   // Verify stock exists
   const stock = await db.Stock.findByPk(stockId);
-  
+
   if (!stock) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Stock not found');
   }
 
   // Prepare filter conditions
-  const whereConditions = { 
-    stockId: stockId 
+  const whereConditions = {
+    stockId: stockId
   };
-  
+
   // Add indicator type filter if provided
   if (type) {
     // Get the indicator type ID
     const indicatorType = await db.IndicatorType.findOne({
       where: { name: type }
     });
-    
+
     if (indicatorType) {
       whereConditions.indicatorTypeId = indicatorType.id;
     } else {
       throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid indicator type');
     }
   }
-  
+
   // Add period filter if provided
   if (period) {
     whereConditions.periodLength = period;
@@ -214,38 +240,38 @@ const getStockNews = async (stockId, filter) => {
   const { sentiment, from: fromDate, to: toDate } = filter || {};
   // Verify stock exists
   const stock = await db.Stock.findByPk(stockId);
-  
+
   if (!stock) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Stock not found');
   }
 
   // Prepare filter conditions
-  const whereConditions = { 
-    stockId: stockId 
+  const whereConditions = {
+    stockId: stockId
   };
-  
+
   // Add sentiment filter if provided
   if (sentiment && sentiment !== 'any') {
     // Get the sentiment type ID
     const sentimentType = await db.SentimentType.findOne({
       where: { name: sentiment }
     });
-    
+
     if (sentimentType) {
       whereConditions.sentimentTypeId = sentimentType.id;
     } else {
       throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid sentiment type');
     }
   }
-  
+
   // Add date range filtering if provided
   if (fromDate || toDate) {
     whereConditions.publicationDate = {};
-    
+
     if (fromDate) {
       whereConditions.publicationDate[Op.gte] = fromDate;
     }
-    
+
     if (toDate) {
       whereConditions.publicationDate[Op.lte] = toDate;
     }
@@ -275,14 +301,14 @@ const getStockNews = async (stockId, filter) => {
  */
 const validateExchangeExists = async (exchangeId) => {
   if (!exchangeId) return true; // null is allowed for optional fields
-  
+
   const exchange = await db.Exchange.findOne({
-    where: { 
+    where: {
       id: exchangeId,
-      isActive: true 
+      isActive: true
     }
   });
-  
+
   return !!exchange;
 };
 
@@ -293,14 +319,14 @@ const validateExchangeExists = async (exchangeId) => {
  */
 const validateSectorExists = async (sectorId) => {
   if (!sectorId) return true; // null is allowed for optional fields
-  
+
   const sector = await db.Sector.findOne({
-    where: { 
+    where: {
       id: sectorId,
-      isActive: true 
+      isActive: true
     }
   });
-  
+
   return !!sector;
 };
 
@@ -311,15 +337,33 @@ const validateSectorExists = async (sectorId) => {
  */
 const validateCurrencyExists = async (currencyId) => {
   if (!currencyId) return true; // null is allowed for optional fields
-  
+
   const currency = await db.Currency.findOne({
-    where: { 
+    where: {
       id: currencyId,
-      isActive: true 
+      isActive: true
     }
   });
-  
+
   return !!currency;
+};
+
+/**
+ * Check if detailed sector exists and is active
+ * @param {number} sectorDetailedId - Detailed Sector ID to validate
+ * @returns {Promise<boolean>} True if detailed sector exists and is active
+ */
+const validateDetailedSectorExists = async (sectorDetailedId) => {
+  if (!sectorDetailedId) return true; // null is allowed for optional fields
+
+  const detailedSector = await db.DetailedSector.findOne({
+    where: {
+      id: sectorDetailedId,
+      isActive: true
+    }
+  });
+
+  return !!detailedSector;
 };
 
 /**
@@ -328,18 +372,23 @@ const validateCurrencyExists = async (currencyId) => {
  * @returns {Promise<void>} Throws error if any dependency is invalid
  */
 const validateStockDependencies = async (stockData) => {
-  const { exchangeId, sectorId, currencyId } = stockData;
-  
+  const { exchangeId, sectorId, currencyId, sectorDetailedId } = stockData;
+
   // Validate exchange (required)
   if (exchangeId && !(await validateExchangeExists(exchangeId))) {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid exchange ID. Exchange not found or inactive.');
   }
-  
+
   // Validate sector (optional)
   if (sectorId && !(await validateSectorExists(sectorId))) {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid sector ID. Sector not found or inactive.');
   }
-  
+
+  // Validate detailed sector (optional)
+  if (sectorDetailedId && !(await validateDetailedSectorExists(sectorDetailedId))) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid detailed sector ID. Detailed sector not found or inactive.');
+  }
+
   // Validate currency (required)
   if (currencyId && !(await validateCurrencyExists(currencyId))) {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid currency ID. Currency not found or inactive.');
@@ -354,25 +403,37 @@ const validateStockDependencies = async (stockData) => {
 const createStock = async (stockData) => {
   // Validate foreign key dependencies
   await validateStockDependencies(stockData);
-  
+
   // Check if stock symbol already exists
   const existingStock = await db.Stock.findOne({
     where: { symbol: stockData.symbol }
   });
-  
+
   if (existingStock) {
     throw new ApiError(StatusCodes.CONFLICT, 'Stock with this symbol already exists');
   }
-  
+
+  // Check if ISIN already exists (if provided)
+  if (stockData.isin) {
+    const existingISIN = await db.Stock.findOne({
+      where: { isin: stockData.isin }
+    });
+
+    if (existingISIN) {
+      throw new ApiError(StatusCodes.CONFLICT, 'Stock with this ISIN already exists');
+    }
+  }
+
   // Create the stock
   const stock = await db.Stock.create(stockData);
-  
+
   // Return stock with associations
   return await db.Stock.findByPk(stock.id, {
     include: [
       { model: db.Exchange, as: 'exchange' },
       { model: db.Sector, as: 'sector' },
-      { model: db.Currency, as: 'currency' }
+      { model: db.Currency, as: 'currency' },
+      { model: db.DetailedSector, as: 'detailedSector' }
     ]
   });
 };
@@ -386,37 +447,52 @@ const createStock = async (stockData) => {
 const updateStock = async (id, updateData) => {
   // Check if stock exists
   const stock = await db.Stock.findByPk(id);
-  
+
   if (!stock) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Stock not found');
   }
-  
+
   // Validate foreign key dependencies
   await validateStockDependencies(updateData);
-  
+
   // Check if symbol is being updated and already exists
   if (updateData.symbol && updateData.symbol !== stock.symbol) {
     const existingStock = await db.Stock.findOne({
-      where: { 
+      where: {
         symbol: updateData.symbol,
         id: { [Op.ne]: id } // Exclude current stock
       }
     });
-    
+
     if (existingStock) {
       throw new ApiError(StatusCodes.CONFLICT, 'Stock with this symbol already exists');
     }
   }
-  
+
+  // Check if ISIN is being updated and already exists
+  if (updateData.isin && updateData.isin !== stock.isin) {
+    const existingISIN = await db.Stock.findOne({
+      where: {
+        isin: updateData.isin,
+        id: { [Op.ne]: id } // Exclude current stock
+      }
+    });
+
+    if (existingISIN) {
+      throw new ApiError(StatusCodes.CONFLICT, 'Stock with this ISIN already exists');
+    }
+  }
+
   // Update the stock
   await stock.update(updateData);
-  
+
   // Return updated stock with associations
   return await db.Stock.findByPk(id, {
     include: [
       { model: db.Exchange, as: 'exchange' },
       { model: db.Sector, as: 'sector' },
-      { model: db.Currency, as: 'currency' }
+      { model: db.Currency, as: 'currency' },
+      { model: db.DetailedSector, as: 'detailedSector' }
     ]
   });
 };
@@ -429,15 +505,179 @@ const updateStock = async (id, updateData) => {
 const deleteStock = async (id) => {
   // Check if stock exists
   const stock = await db.Stock.findByPk(id);
-  
+
   if (!stock) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Stock not found');
   }
-  
+
   // Soft delete by setting isActive to false
   await stock.update({ isActive: false });
-  
+
   return stock;
+};
+
+/**
+ * Get stock by ISIN
+ * @param {string} isin - Stock ISIN
+ * @returns {Promise<Object>} Stock with related data
+ */
+const getStockByISIN = async (isin) => {
+  const stock = await db.Stock.findOne({
+    where: {
+      isin: isin,
+      isActive: true
+    },
+    include: [
+      { model: db.Exchange, as: 'exchange' },
+      { model: db.Sector, as: 'sector' },
+      { model: db.Currency, as: 'currency' },
+      { model: db.DetailedSector, as: 'detailedSector' }
+    ]
+  });
+
+  if (!stock) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Stock not found');
+  }
+
+  return stock;
+};
+
+/**
+ * Get stocks by detailed sector
+ * @param {number} sectorDetailedId - Detailed sector ID
+ * @param {Object} options - Query options (pagination, sorting)
+ * @returns {Promise<Object>} Paginated stocks list for detailed sector
+ */
+const getStocksByDetailedSector = async (sectorDetailedId, options = {}) => {
+  const { limit = 50, page = 1, sortBy = 'symbol', sortOrder = 'ASC' } = options;
+  const offset = (page - 1) * limit;
+
+  const { rows, count } = await db.Stock.findAndCountAll({
+    where: {
+      sectorDetailedId: sectorDetailedId,
+      isActive: true
+    },
+    include: [
+      { model: db.Exchange, as: 'exchange' },
+      { model: db.DetailedSector, as: 'detailedSector' },
+      { model: db.Currency, as: 'currency' }
+    ],
+    limit,
+    offset,
+    order: [[sortBy, sortOrder]]
+  });
+
+  return {
+    stocks: rows,
+    pagination: {
+      totalCount: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+      limit
+    }
+  };
+};
+
+/**
+ * Get FNO enabled stocks
+ * @param {Object} options - Query options (pagination, sorting)
+ * @returns {Promise<Object>} Paginated list of FNO enabled stocks
+ */
+const getFNOEnabledStocks = async (options = {}) => {
+  const { limit = 50, page = 1, sortBy = 'symbol', sortOrder = 'ASC' } = options;
+  const offset = (page - 1) * limit;
+
+  const { rows, count } = await db.Stock.findAndCountAll({
+    where: {
+      isFnoEnabled: true,
+      isActive: true
+    },
+    include: [
+      { model: db.Exchange, as: 'exchange' },
+      { model: db.DetailedSector, as: 'detailedSector' },
+      { model: db.Currency, as: 'currency' }
+    ],
+    limit,
+    offset,
+    order: [[sortBy, sortOrder]]
+  });
+
+  return {
+    stocks: rows,
+    pagination: {
+      totalCount: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+      limit
+    }
+  };
+};
+
+/**
+ * Get stocks by surveillance stage
+ * @param {string} surveillanceStage - Surveillance stage
+ * @param {Object} options - Query options (pagination, sorting)
+ * @returns {Promise<Object>} Paginated list of stocks in surveillance stage
+ */
+const getStocksBySurveillanceStage = async (surveillanceStage, options = {}) => {
+  const { limit = 50, page = 1, sortBy = 'symbol', sortOrder = 'ASC' } = options;
+  const offset = (page - 1) * limit;
+
+  const { rows, count } = await db.Stock.findAndCountAll({
+    where: {
+      surveillanceStage: surveillanceStage,
+      isActive: true
+    },
+    include: [
+      { model: db.Exchange, as: 'exchange' },
+      { model: db.DetailedSector, as: 'detailedSector' },
+      { model: db.Currency, as: 'currency' }
+    ],
+    limit,
+    offset,
+    order: [[sortBy, sortOrder]]
+  });
+
+  return {
+    stocks: rows,
+    pagination: {
+      totalCount: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+      limit
+    }
+  };
+};
+
+/**
+ * Update stock with Indian-specific fields
+ * @param {number} stockId - Stock ID
+ * @param {Object} indianData - Indian-specific data to update
+ * @returns {Promise<Object>} Updated stock
+ */
+const updateStockIndianFields = async (stockId, indianData) => {
+  const stock = await db.Stock.findByPk(stockId);
+
+  if (!stock) {
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Stock not found');
+  }
+
+  // Validate detailed sector if provided
+  if (indianData.sectorDetailedId) {
+    await validateStockDependencies({ sectorDetailedId: indianData.sectorDetailedId });
+  }
+
+  // Update the stock with Indian fields
+  await stock.update(indianData);
+
+  // Return updated stock with associations
+  return await db.Stock.findByPk(stockId, {
+    include: [
+      { model: db.Exchange, as: 'exchange' },
+      { model: db.DetailedSector, as: 'detailedSector' },
+      { model: db.Currency, as: 'currency' }
+    ]
+  });
 };
 
 /**
@@ -469,11 +709,11 @@ const bulkUpdatePrices = async (priceData, priceDate) => {
 
   // Process each price data item
   const priceRecords = [];
-  
+
   for (const item of priceData) {
     try {
       const stockId = symbolToIdMap[item.symbol];
-      
+
       if (!stockId) {
         results.skipped.push({
           symbol: item.symbol,
@@ -482,7 +722,7 @@ const bulkUpdatePrices = async (priceData, priceDate) => {
         continue;
       }
 
-      // Transform NSE data to our price format
+      // Transform NSE data to our price format (enhanced for Indian market)
       const priceRecord = {
         stockId: stockId,
         priceDate: priceDate,
@@ -490,7 +730,25 @@ const bulkUpdatePrices = async (priceData, priceDate) => {
         closePrice: item.lastPrice || null,
         highPrice: item.dayHigh || null,
         lowPrice: item.dayLow || null,
+        lastPrice: item.lastPrice || null,
+        previousClose: item.previousClose || null,
+        priceChange: item.change || null,
+        priceChangePercent: item.pChange || null,
         volume: item.totalTradedVolume || null,
+        vwap: item.averagePrice || null,
+        basePrice: item.basePrice || null,
+        lowerCircuitPrice: item.lowerCP || null,
+        upperCircuitPrice: item.upperCP || null,
+        intradayMin: item.intraDayHighLow?.min || null,
+        intradayMax: item.intraDayHighLow?.max || null,
+        weekHigh: item.weekHighLow?.max || null,
+        weekLow: item.weekHighLow?.min || null,
+        weekHighDate: item.weekHighLow?.maxDate || null,
+        weekLowDate: item.weekHighLow?.minDate || null,
+        sessionType: item.sessionType || 'Regular',
+        marketType: item.marketType || 'NM',
+        series: item.series || 'EQ',
+        priceBand: item.priceBand || null,
         dataSource: 'NSE_MANUAL',
         createdAt: new Date(),
         updatedAt: new Date()
@@ -498,7 +756,7 @@ const bulkUpdatePrices = async (priceData, priceDate) => {
 
       priceRecords.push(priceRecord);
       results.processed++;
-      
+
     } catch (error) {
       results.errors.push({
         symbol: item.symbol,
@@ -512,12 +770,30 @@ const bulkUpdatePrices = async (priceData, priceDate) => {
     try {
       const bulkResult = await db.StockPrice.bulkCreate(priceRecords, {
         updateOnDuplicate: [
-          'openPrice', 
-          'closePrice', 
-          'highPrice', 
-          'lowPrice', 
-          'volume', 
-          'dataSource', 
+          'openPrice',
+          'closePrice',
+          'highPrice',
+          'lowPrice',
+          'lastPrice',
+          'previousClose',
+          'priceChange',
+          'priceChangePercent',
+          'volume',
+          'vwap',
+          'basePrice',
+          'lowerCircuitPrice',
+          'upperCircuitPrice',
+          'intradayMin',
+          'intradayMax',
+          'weekHigh',
+          'weekLow',
+          'weekHighDate',
+          'weekLowDate',
+          'sessionType',
+          'marketType',
+          'series',
+          'priceBand',
+          'dataSource',
           'updatedAt'
         ],
         returning: true
@@ -525,10 +801,10 @@ const bulkUpdatePrices = async (priceData, priceDate) => {
 
       // Count created vs updated (approximate - Sequelize doesn't provide exact counts)
       results.created = bulkResult.length;
-      
+
     } catch (error) {
       throw new ApiError(
-        StatusCodes.INTERNAL_SERVER_ERROR, 
+        StatusCodes.INTERNAL_SERVER_ERROR,
         `Bulk price update failed: ${error.message}`
       );
     }
@@ -551,16 +827,401 @@ const bulkUpdatePrices = async (priceData, priceDate) => {
   };
 };
 
+/**
+ * Get NSE exchange ID from database
+ * @returns {Promise<number>} NSE exchange ID
+ */
+const getNSEExchangeId = async () => {
+  const nseExchange = await db.Exchange.findOne({
+    where: {
+      code: 'NSE',
+      isActive: true
+    }
+  });
+
+  if (!nseExchange) {
+    throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'NSE exchange not found in database');
+  }
+
+  return nseExchange.id;
+};
+
+/**
+ * Get INR currency ID from database
+ * @returns {Promise<number>} INR currency ID
+ */
+const getINRCurrencyId = async () => {
+  const inrCurrency = await db.Currency.findOne({
+    where: {
+      code: 'INR',
+      isActive: true
+    }
+  });
+
+  if (!inrCurrency) {
+    throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'INR currency not found in database');
+  }
+
+  return inrCurrency.id;
+};
+
+/**
+ * Process complete market data - strategically reusing existing validations and services
+ * @param {Object} data - Complete market data object
+ * @returns {Promise<Object>} Processing result with all created/updated entities
+ */
+const processCompleteMarketData = async (data) => {
+  const { stockInfo, priceInfo, preMarketData, preMarketOrders, valuationMetrics, indexMemberships } = data;
+
+  // Use database transaction to ensure atomicity
+  const transaction = await db.sequelize.transaction();
+
+  try {
+    let result = {
+      stock: null,
+      priceData: null,
+      additionalData: {
+        preMarketProcessed: false,
+        valuationProcessed: false,
+        indexMembershipsProcessed: 0
+      },
+      summary: {
+        created: false,
+        updated: false
+      }
+    };
+
+    // Step 1: Handle stock creation/update using existing createStock/updateStock logic
+    // Dynamically resolve NSE exchange ID and INR currency ID if not provided or invalid
+    let validExchangeId = stockInfo.exchange_id;
+    let validCurrencyId = stockInfo.currency_id;
+
+    // If exchange_id is not provided or doesn't exist, get NSE exchange ID
+    if (!validExchangeId || !(await validateExchangeExists(validExchangeId))) {
+      validExchangeId = await getNSEExchangeId();
+    }
+
+    // If currency_id is not provided or doesn't exist, get INR currency ID
+    if (!validCurrencyId || !(await validateCurrencyExists(validCurrencyId))) {
+      validCurrencyId = await getINRCurrencyId();
+    }
+
+    // Validate sector_detailed_id if provided
+    if (stockInfo.sector_detailed_id && !(await validateDetailedSectorExists(stockInfo.sector_detailed_id))) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, `Detailed sector with ID ${stockInfo.sector_detailed_id} does not exist or is inactive`);
+    }
+
+    // Transform field names from snake_case to camelCase for existing validation
+    const stockDataForValidation = {
+      symbol: stockInfo.symbol,
+      companyName: stockInfo.company_name,
+      description: stockInfo.description,
+      exchangeId: validExchangeId,
+      sectorDetailedId: stockInfo.sector_detailed_id,
+      currencyId: validCurrencyId,
+      isin: stockInfo.isin,
+      faceValue: stockInfo.face_value,
+      issuedSize: stockInfo.issued_size,
+      listingDate: stockInfo.listing_date,
+      isFnoEnabled: stockInfo.is_fno_enabled,
+      isCasEnabled: stockInfo.is_cas_enabled,
+      isSlbEnabled: stockInfo.is_slb_enabled,
+      isDebtSec: stockInfo.is_debt_sec,
+      isEtfSec: stockInfo.is_etf_sec,
+      isDelisted: stockInfo.is_delisted,
+      isSuspended: stockInfo.is_suspended,
+      isMunicipalBond: stockInfo.is_municipal_bond,
+      isHybridSymbol: stockInfo.is_hybrid_symbol,
+      isTop10: stockInfo.is_top10,
+      identifier: stockInfo.identifier,
+      tradingStatus: stockInfo.trading_status,
+      tradingSegment: stockInfo.trading_segment,
+      boardStatus: stockInfo.board_status,
+      classOfShare: stockInfo.class_of_share,
+      derivativesAvailable: stockInfo.derivatives_available,
+      surveillanceStage: stockInfo.surveillance_stage,
+      surveillanceDescription: stockInfo.surveillance_description,
+      tickSize: stockInfo.tick_size,
+      tempSuspendedSeries: stockInfo.temp_suspended_series,
+      activeSeries: stockInfo.active_series,
+      debtSeries: stockInfo.debt_series,
+      isActive: stockInfo.is_active !== false
+    };
+
+    // Validate all dependencies before creating/updating
+    await validateStockDependencies(stockDataForValidation);
+
+    // Check if stock exists by symbol
+    let existingStock = await db.Stock.findOne({
+      where: { symbol: stockInfo.symbol },
+      transaction
+    });
+
+    if (existingStock) {
+      // Check for symbol/ISIN conflicts before updating
+      if (stockDataForValidation.symbol !== existingStock.symbol) {
+        const symbolConflict = await db.Stock.findOne({
+          where: { 
+            symbol: stockDataForValidation.symbol,
+            id: { [Op.ne]: existingStock.id }
+          },
+          transaction
+        });
+        if (symbolConflict) {
+          throw new ApiError(StatusCodes.CONFLICT, 'Stock with this symbol already exists');
+        }
+      }
+
+      if (stockDataForValidation.isin && stockDataForValidation.isin !== existingStock.isin) {
+        const isinConflict = await db.Stock.findOne({
+          where: { 
+            isin: stockDataForValidation.isin,
+            id: { [Op.ne]: existingStock.id }
+          },
+          transaction
+        });
+        if (isinConflict) {
+          throw new ApiError(StatusCodes.CONFLICT, 'Stock with this ISIN already exists');
+        }
+      }
+
+      // Update existing stock within transaction
+      await existingStock.update(stockDataForValidation, { transaction });
+      result.stock = await db.Stock.findByPk(existingStock.id, {
+        include: [
+          { model: db.Exchange, as: 'exchange' },
+          { model: db.Sector, as: 'sector' },
+          { model: db.Currency, as: 'currency' },
+          { model: db.Industry, as: 'industry' }
+        ],
+        transaction
+      });
+      result.summary.updated = true;
+    } else {
+      // Check for symbol/ISIN conflicts before creating
+      if (stockDataForValidation.symbol) {
+        const symbolConflict = await db.Stock.findOne({
+          where: { symbol: stockDataForValidation.symbol },
+          transaction
+        });
+        if (symbolConflict) {
+          throw new ApiError(StatusCodes.CONFLICT, 'Stock with this symbol already exists');
+        }
+      }
+
+      if (stockDataForValidation.isin) {
+        const isinConflict = await db.Stock.findOne({
+          where: { isin: stockDataForValidation.isin },
+          transaction
+        });
+        if (isinConflict) {
+          throw new ApiError(StatusCodes.CONFLICT, 'Stock with this ISIN already exists');
+        }
+      }
+
+      // Create new stock within transaction
+      const createdStock = await db.Stock.create(stockDataForValidation, { transaction });
+      result.stock = await db.Stock.findByPk(createdStock.id, {
+        include: [
+          { model: db.Exchange, as: 'exchange' },
+          { model: db.Sector, as: 'sector' },
+          { model: db.Currency, as: 'currency' },
+          { model: db.Industry, as: 'industry' }
+        ],
+        transaction
+      });
+      result.summary.created = true;
+    }
+
+    // Step 2: Handle price data using existing addStockPrices logic pattern
+    // Transform price data to match existing StockPrice model
+    const priceDataForDB = {
+      priceDate: priceInfo.price_date,
+      openPrice: priceInfo.open_price,
+      closePrice: priceInfo.close_price,
+      highPrice: priceInfo.high_price,
+      lowPrice: priceInfo.low_price,
+      volume: priceInfo.volume,
+      dataSource: priceInfo.data_source || 'NSE'
+    };
+
+    // Check if price data exists for this date (unique constraint is stock_id + price_date)
+    const existingPrice = await db.StockPrice.findOne({
+      where: {
+        stockId: result.stock.id,
+        priceDate: priceInfo.price_date
+      },
+      transaction
+    });
+
+    if (existingPrice) {
+      // Update existing price record - merge data intelligently
+      const updateData = {
+        stockId: result.stock.id,
+        priceDate: priceDataForDB.priceDate,
+        // Keep existing values if new ones are null/undefined, otherwise use new values
+        openPrice: priceDataForDB.openPrice ?? existingPrice.openPrice,
+        closePrice: priceDataForDB.closePrice ?? existingPrice.closePrice,
+        highPrice: priceDataForDB.highPrice ?? existingPrice.highPrice,
+        lowPrice: priceDataForDB.lowPrice ?? existingPrice.lowPrice,
+        volume: priceDataForDB.volume ?? existingPrice.volume,
+        // Update data source to indicate multiple sources if different
+        dataSource: existingPrice.dataSource !== priceDataForDB.dataSource 
+          ? `${existingPrice.dataSource},${priceDataForDB.dataSource}`
+          : priceDataForDB.dataSource
+      };
+      
+      result.priceData = await existingPrice.update(updateData, { transaction });
+      result.summary.priceUpdated = true;
+    } else {
+      // Use upsert to handle race conditions
+      try {
+        const [priceRecord, created] = await db.StockPrice.upsert({
+          ...priceDataForDB,
+          stockId: result.stock.id
+        }, {
+          transaction,
+          returning: true
+        });
+        
+        result.priceData = priceRecord;
+        result.summary[created ? 'priceCreated' : 'priceUpdated'] = true;
+      } catch (upsertError) {
+        // If upsert fails, try one more time to find and update
+        const retryExisting = await db.StockPrice.findOne({
+          where: {
+            stockId: result.stock.id,
+            priceDate: priceInfo.price_date
+          },
+          transaction
+        });
+        
+        if (retryExisting) {
+          result.priceData = await retryExisting.update({
+            ...priceDataForDB,
+            stockId: result.stock.id
+          }, { transaction });
+          result.summary.priceUpdated = true;
+        } else {
+          throw upsertError; // Re-throw if we still can't handle it
+        }
+      }
+    }
+
+    // Step 3: Handle additional data using extended StockPrice records or JSON fields
+    // Since we don't have separate models for pre-market, valuation, etc., 
+    // we'll store them as extended price information or in additional fields
+
+    // For pre-market data, we can create additional price records with different session types
+    if (preMarketData) {
+      const preMarketPriceData = {
+        stockId: result.stock.id,
+        priceDate: preMarketData.trading_date,
+        openPrice: preMarketData.iep,
+        closePrice: preMarketData.final_iep || preMarketData.iep,
+        volume: preMarketData.total_traded_volume,
+        dataSource: 'NSE_PREMARKET'
+      };
+
+      // Use upsert to handle potential duplicates more robustly
+      try {
+        const [preMarketRecord, created] = await db.StockPrice.upsert(preMarketPriceData, {
+          transaction,
+          returning: true
+        });
+        
+        result.additionalData.preMarketProcessed = true;
+        result.additionalData.preMarketCreated = created;
+      } catch (preMarketError) {
+        // If upsert fails, try to find and update existing record
+        const existingPreMarket = await db.StockPrice.findOne({
+          where: {
+            stockId: result.stock.id,
+            priceDate: preMarketData.trading_date,
+            dataSource: 'NSE_PREMARKET'
+          },
+          transaction
+        });
+
+        if (existingPreMarket) {
+          await existingPreMarket.update(preMarketPriceData, { transaction });
+          result.additionalData.preMarketProcessed = true;
+          result.additionalData.preMarketCreated = false;
+        } else {
+          // Check if there's a conflict with regular price data for same date
+          const conflictingPrice = await db.StockPrice.findOne({
+            where: {
+              stockId: result.stock.id,
+              priceDate: preMarketData.trading_date
+            },
+            transaction
+          });
+
+          if (conflictingPrice && conflictingPrice.dataSource !== 'NSE_PREMARKET') {
+            // If there's a regular price record for the same date, update it to include pre-market data
+            const mergedData = {
+              ...preMarketPriceData,
+              // Preserve existing regular market data, add pre-market info
+              openPrice: preMarketPriceData.openPrice || conflictingPrice.openPrice,
+              dataSource: `${conflictingPrice.dataSource},NSE_PREMARKET`
+            };
+            await conflictingPrice.update(mergedData, { transaction });
+            result.additionalData.preMarketProcessed = true;
+            result.additionalData.preMarketMerged = true;
+          } else {
+            throw preMarketError; // Re-throw if we can't handle it
+          }
+        }
+      }
+    }
+
+    // For valuation metrics, we can store them in the stock record or create price records with specific flags
+    if (valuationMetrics) {
+      // Update stock with PE ratio if available
+      if (valuationMetrics.symbol_pe) {
+        await result.stock.update({
+          peRatio: valuationMetrics.symbol_pe
+        }, { transaction });
+      }
+      result.additionalData.valuationProcessed = true;
+    }
+
+    // For index memberships, since we don't have a separate model, we'll log them
+    // In a real implementation, you'd want to create the index membership models
+    if (indexMemberships && indexMemberships.length > 0) {
+      // For now, we'll just count them as processed
+      // In the future, when index models are created, this would create actual relationships
+      result.additionalData.indexMembershipsProcessed = indexMemberships.length;
+    }
+
+    await transaction.commit();
+    return result;
+
+  } catch (error) {
+    await transaction.rollback();
+    throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, `Failed to process complete market data: ${error.message}`);
+  }
+};
+
 module.exports = {
   getStocks,
   getStockById,
+  getStockByISIN,
+  getStocksByDetailedSector,
+  getFNOEnabledStocks,
+  getStocksBySurveillanceStage,
   getStockPrices,
   addStockPrices,
   getStockIndicators,
   getStockNews,
   createStock,
   updateStock,
+  updateStockIndianFields,
   deleteStock,
   validateStockDependencies,
-  bulkUpdatePrices
+  validateDetailedSectorExists,
+  bulkUpdatePrices,
+  processCompleteMarketData,
+  getNSEExchangeId,
+  getINRCurrencyId
 };

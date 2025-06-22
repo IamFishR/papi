@@ -82,6 +82,14 @@ module.exports = (sequelize) => {
       {
         fields: ['volume'],
       },
+      {
+        fields: ['data_source'],
+      },
+      {
+        unique: true,
+        fields: ['stock_id', 'price_date', 'data_source'],
+        name: 'st_stock_prices_stock_id_price_date_data_source_unique',
+      },
     ],
   });
 

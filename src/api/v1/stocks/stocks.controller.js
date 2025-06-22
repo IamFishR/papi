@@ -33,7 +33,7 @@ const getStocks = catchAsync(async (req, res) => {
   options.page = options.page ? parseInt(options.page, 10) : 1;
 
   const { stocks, pagination } = await stockService.getStocks(filter, options);
-  
+
   return apiResponse.success(
     res,
     StatusCodes.OK,
@@ -49,7 +49,7 @@ const getStocks = catchAsync(async (req, res) => {
  */
 const getStockById = catchAsync(async (req, res) => {
   const stock = await stockService.getStockById(req.params.id);
-  
+
   return apiResponse.success(
     res,
     StatusCodes.OK,
@@ -65,9 +65,9 @@ const getStockById = catchAsync(async (req, res) => {
 const getStockPrices = catchAsync(async (req, res) => {
   const stockId = req.params.id;
   const dateFilter = pick(req.query, ['from', 'to']);
-  
+
   const stockPrices = await stockService.getStockPrices(stockId, dateFilter);
-  
+
   return apiResponse.success(
     res,
     StatusCodes.OK,
@@ -83,9 +83,9 @@ const getStockPrices = catchAsync(async (req, res) => {
 const addStockPrices = catchAsync(async (req, res) => {
   const stockId = req.params.id;
   const priceData = req.body;
-  
+
   const result = await stockService.addStockPrices(stockId, priceData);
-  
+
   return apiResponse.success(
     res,
     StatusCodes.CREATED,
@@ -101,9 +101,9 @@ const addStockPrices = catchAsync(async (req, res) => {
 const getStockNews = catchAsync(async (req, res) => {
   const stockId = req.params.id;
   const filter = pick(req.query, ['sentiment', 'from', 'to']);
-  
+
   const news = await stockService.getStockNews(stockId, filter);
-  
+
   return apiResponse.success(
     res,
     StatusCodes.OK,
@@ -119,9 +119,9 @@ const getStockNews = catchAsync(async (req, res) => {
 const getStockIndicators = catchAsync(async (req, res) => {
   const stockId = req.params.id;
   const filter = pick(req.query, ['type', 'period']);
-  
+
   const indicators = await stockService.getStockIndicators(stockId, filter);
-  
+
   return apiResponse.success(
     res,
     StatusCodes.OK,
@@ -137,9 +137,9 @@ const getStockIndicators = catchAsync(async (req, res) => {
  */
 const createStock = catchAsync(async (req, res) => {
   const stockData = req.body;
-  
+
   const stock = await stockService.createStock(stockData);
-  
+
   return apiResponse.success(
     res,
     StatusCodes.CREATED,
@@ -156,9 +156,9 @@ const createStock = catchAsync(async (req, res) => {
 const updateStock = catchAsync(async (req, res) => {
   const stockId = req.params.id;
   const updateData = req.body;
-  
+
   const stock = await stockService.updateStock(stockId, updateData);
-  
+
   return apiResponse.success(
     res,
     StatusCodes.OK,
@@ -174,9 +174,9 @@ const updateStock = catchAsync(async (req, res) => {
  */
 const deleteStock = catchAsync(async (req, res) => {
   const stockId = req.params.id;
-  
+
   const stock = await stockService.deleteStock(stockId);
-  
+
   return apiResponse.success(
     res,
     StatusCodes.OK,
@@ -192,13 +192,38 @@ const deleteStock = catchAsync(async (req, res) => {
  */
 const bulkUpdatePrices = catchAsync(async (req, res) => {
   const { priceData, priceDate } = req.body;
-  
+
   const result = await stockService.bulkUpdatePrices(priceData, priceDate);
-  
+
   return apiResponse.success(
     res,
     StatusCodes.OK,
     'Bulk price update completed successfully',
+    result
+  );
+});
+
+/**
+ * Complete market data processing - handles stock info, prices, pre-market data, valuation, and index memberships
+ * @route POST /api/v1/stocks/complete-market-data
+ * @admin
+ */
+const completeMarketData = catchAsync(async (req, res) => {
+  const { stockInfo, priceInfo, preMarketData, preMarketOrders, valuationMetrics, indexMemberships } = req.body;
+
+  const result = await stockService.processCompleteMarketData({
+    stockInfo,
+    priceInfo,
+    preMarketData,
+    preMarketOrders,
+    valuationMetrics,
+    indexMemberships
+  });
+
+  return apiResponse.success(
+    res,
+    StatusCodes.CREATED,
+    'Complete market data processed successfully',
     result
   );
 });
@@ -213,5 +238,6 @@ module.exports = {
   createStock,
   updateStock,
   deleteStock,
-  bulkUpdatePrices
+  bulkUpdatePrices,
+  completeMarketData
 };

@@ -61,6 +61,11 @@ module.exports = {
       currencyMap[currency.code] = currency.id;
     });
 
+    // Verify we have the required currency
+    if (!currencyMap['INR']) {
+      throw new Error('INR currency not found in database. Please run currency seeder first.');
+    }
+
     // Sample Indian stocks to seed
     await queryInterface.bulkInsert('st_stocks', [
       {

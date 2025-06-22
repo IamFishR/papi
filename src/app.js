@@ -23,8 +23,23 @@ const apiRoutes = require('./api');
 const app = express();
 
 // Body parser middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Debug middleware for body parsing
+app.use((req, res, next) => {
+  if (req.originalUrl.includes('/complete-market-data')) {
+    console.log('Body Debug Middleware:', {
+      method: req.method,
+      url: req.originalUrl,
+      contentType: req.headers['content-type'],
+      hasBody: !!req.body,
+      bodyType: typeof req.body,
+      bodySize: req.body ? JSON.stringify(req.body).length : 0
+    });
+  }
+  next();
+});
 
 // Cookie parser
 app.use(cookieParser());

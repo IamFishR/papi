@@ -43,6 +43,15 @@ const createDefaultUserPreferences = async (userId) => {
     throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Default risk tolerance level not found');
   }
 
+  // Get INR currency ID
+  const inrCurrency = await db.Currency.findOne({
+    where: { code: 'INR' }
+  });
+
+  if (!inrCurrency) {
+    throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'INR currency not found');
+  }
+
   // Create default preferences
   const userPreference = await db.UserPreference.create({
     userId,
@@ -50,7 +59,7 @@ const createDefaultUserPreferences = async (userId) => {
     smsNotificationsEnabled: false,
     pushNotificationsEnabled: true,
     riskToleranceLevelId: riskToleranceLevel.id,
-    defaultCurrencyId: 1, // Assuming USD is ID 1
+    defaultCurrencyId: inrCurrency.id, // Use INR as default currency
     notificationFrequency: 'immediate',
     dailySummaryEnabled: true,
     weeklySummaryEnabled: true,

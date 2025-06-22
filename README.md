@@ -1,6 +1,6 @@
 # Stock Trading & Portfolio Management API
 
-A comprehensive REST API for stock trading, portfolio management, and market analysis built with Express.js and Sequelize ORM. Features advanced alerting system, trading journal, watchlist management, and real-time stock data tracking.
+A comprehensive REST API for stock trading, portfolio management, and market analysis built with Express.js and Sequelize ORM. Features advanced alerting system, trading journal, watchlist management, and **enhanced Indian stock market support** with NSE/BSE data integration, pre-market trading, NIFTY indices, and comprehensive valuation metrics.
 
 ## Project Structure
 
@@ -11,7 +11,11 @@ A comprehensive REST API for stock trading, portfolio management, and market ana
 │   │   ├── /v1                  # Version 1 of your API
 │   │   │   ├── /auth            # Authentication & authorization
 │   │   │   ├── /users           # User management
-│   │   │   ├── /stocks          # Stock data & management
+│   │   │   ├── /stocks          # Stock data & management (enhanced for Indian market)
+│   │   │   ├── /sectors         # Detailed sector hierarchy (4-level classification)
+│   │   │   ├── /indices         # Stock indices (NIFTY 50, NIFTY 200, etc.)
+│   │   │   ├── /pre-market      # Pre-market trading data and IEP tracking
+│   │   │   ├── /valuation       # Financial ratios and valuation metrics
 │   │   │   ├── /alerts          # Stock alert system
 │   │   │   ├── /journal         # Trading journal & tags
 │   │   │   ├── /watchlist       # Watchlist management
@@ -133,12 +137,17 @@ This project uses the following packages to provide a robust and secure API:
 - User profile management with soft delete support
 - Rate limiting for security
 
-### 📈 Stock Management System
-- Comprehensive stock data with CRUD operations
-- Stock search and filtering by symbol, exchange, sector, market cap
-- Historical stock price data with date range filtering
-- Stock metrics tracking (P/E ratio, dividend yield, beta)
-- Exchange, sector, and currency reference data
+### 📈 Enhanced Stock Management System ⭐ **UPDATED**
+- **Indian Market Support**: Complete NSE/BSE integration with Indian-specific fields
+- **ISIN Integration**: International Securities Identification Number support
+- **Advanced Filtering**: Search by ISIN, FNO status, surveillance stage, trading status
+- **Circuit Breakers**: Upper and lower circuit price tracking
+- **Trading Series**: Support for EQ, BE, and other trading series
+- **52-Week Data**: High/low tracking with dates
+- **VWAP & Price Bands**: Volume-weighted average price and band classifications
+- **Surveillance Tracking**: GSM, ASM, and other surveillance stage monitoring
+- **FNO Status**: Futures & Options enabled stock identification
+- **Comprehensive Price Data**: Enhanced OHLC with Indian market specifics
 
 ### 🚨 Advanced Alert System
 - Multi-condition alerts with various trigger types:
@@ -167,6 +176,45 @@ This project uses the following packages to provide a robust and secure API:
 - News mention monitoring for specific stocks
 - Market data integration capabilities
 
+### 🇮🇳 Indian Stock Market Features ⭐ **NEW**
+
+#### 🏢 **4-Level Detailed Sector Classification**
+- **Macro Sector** → **Sector** → **Industry** → **Basic Industry** hierarchy
+- Enhanced sector-based stock filtering and analysis
+- Industry-specific performance tracking and comparisons
+- Sector hierarchy management with full CRUD operations
+
+#### 📊 **Pre-Market Trading Support**
+- **IEP Tracking**: Indicative Equilibrium Price monitoring
+- **Order Book Data**: Buy/sell order tracking with quantities
+- **ATO Orders**: At The Open order quantity tracking
+- **Session Management**: Pre-market session timing and data
+- **Historical Pre-Market**: Historical IEP and volume data
+- **Market Movers**: Top gainers/losers in pre-market sessions
+
+#### 📈 **NIFTY Indices Management**
+- **Index Creation**: Support for NIFTY 50, NIFTY 200, sector indices
+- **Membership Tracking**: Stock-to-index relationships with weights
+- **Weight Management**: Dynamic index weight updates
+- **Index Composition**: Detailed composition analysis and statistics
+- **Historical Membership**: Track when stocks join/leave indices
+- **Sector Distribution**: Index composition by sector analysis
+
+#### 💰 **Comprehensive Valuation Metrics**
+- **Financial Ratios**: P/E, P/B, ROE, ROA, Debt-to-Equity, Current Ratio
+- **Valuation Metrics**: EV/EBITDA, PEG ratio, Price-to-Sales, FCF ratios
+- **Sector Comparisons**: Stock performance vs sector averages
+- **Historical Tracking**: Time-series valuation data
+- **Screening Tools**: Filter stocks by valuation criteria
+- **Performance Leaders**: Top ROE, P/E performers by sector
+
+#### 🛡️ **Regulatory Compliance**
+- **Surveillance Stages**: GSM, ASM, and other regulatory classifications
+- **Trading Status**: Active, Suspended, Delisted status tracking
+- **Board Status**: Main board, SME board classifications
+- **Class of Shares**: Equity, Preference share categorization
+- **Derivatives Status**: FNO, CAS, SLB availability tracking
+
 ### 🔧 Technical Features
 - RESTful API with versioning support
 - Comprehensive input validation using Joi
@@ -192,14 +240,20 @@ This project uses the following packages to provide a robust and secure API:
 - `DELETE /api/v1/users/:id` - Delete user
 - `GET /api/v1/users/me` - Get current user profile
 
-### Stocks
-- `GET /api/v1/stocks` - Get all stocks with filtering
+### Stocks ⭐ **ENHANCED**
+- `GET /api/v1/stocks` - Get all stocks with enhanced filtering (ISIN, FNO, surveillance)
 - `GET /api/v1/stocks/:id` - Get stock by ID
-- `POST /api/v1/stocks` - Create new stock (admin only)
-- `PUT /api/v1/stocks/:id` - Update stock (admin only)
+- `GET /api/v1/stocks/by-isin/:isin` - **NEW**: Get stock by ISIN
+- `GET /api/v1/stocks/fno-enabled` - **NEW**: Get FNO enabled stocks
+- `GET /api/v1/stocks/surveillance/:stage` - **NEW**: Get stocks by surveillance stage
+- `GET /api/v1/stocks/sector-detailed/:sectorId` - **NEW**: Get stocks by detailed sector
+- `POST /api/v1/stocks` - Create new stock with Indian fields (admin only)
+- `PUT /api/v1/stocks/:id` - Update stock with Indian fields (admin only)
+- `PUT /api/v1/stocks/:id/indian-fields` - **NEW**: Update Indian-specific fields (admin only)
 - `DELETE /api/v1/stocks/:id` - Delete stock (admin only)
-- `GET /api/v1/stocks/:id/prices` - Get stock price history
-- `POST /api/v1/stocks/:id/prices` - Add stock price data
+- `GET /api/v1/stocks/:id/prices` - Get enhanced stock price history
+- `POST /api/v1/stocks/:id/prices` - Add enhanced stock price data
+- `POST /api/v1/stocks/bulk/prices` - Bulk update prices with Indian market data
 
 ### Alerts
 - `GET /api/v1/alerts` - Get user's alerts
@@ -230,6 +284,53 @@ This project uses the following packages to provide a robust and secure API:
 - `DELETE /api/v1/watchlist/:id` - Delete watchlist
 - `POST /api/v1/watchlist/:id/stocks` - Add stock to watchlist
 - `DELETE /api/v1/watchlist/:id/stocks/:stockId` - Remove stock from watchlist
+
+### 🇮🇳 Indian Market APIs ⭐ **NEW**
+
+#### Detailed Sectors
+- `GET /api/v1/sectors/detailed` - Get detailed sectors with 4-level hierarchy
+- `GET /api/v1/sectors/detailed/:id` - Get detailed sector by ID
+- `GET /api/v1/sectors/detailed/hierarchy` - Get complete sector hierarchy
+- `GET /api/v1/sectors/detailed/search` - Search sectors by keyword
+- `GET /api/v1/sectors/detailed/macro/:macroSector` - Get sectors by macro sector
+- `GET /api/v1/sectors/detailed/:id/stocks` - Get stocks in detailed sector
+- `POST /api/v1/sectors/detailed` - Create detailed sector (admin only)
+- `PUT /api/v1/sectors/detailed/:id` - Update detailed sector (admin only)
+- `DELETE /api/v1/sectors/detailed/:id` - Delete detailed sector (admin only)
+
+#### Pre-Market Trading
+- `GET /api/v1/pre-market/summary` - Get pre-market summary for date
+- `GET /api/v1/pre-market/movers` - Get top gainers/losers in pre-market
+- `GET /api/v1/pre-market/stocks/:stockId` - Get pre-market data for stock
+- `GET /api/v1/pre-market/stocks/:stockId/iep` - Get current IEP for stock
+- `GET /api/v1/pre-market/stocks/:stockId/history` - Get historical pre-market data
+- `POST /api/v1/pre-market/data` - Add pre-market data (admin only)
+- `PUT /api/v1/pre-market/data/:id` - Update pre-market data (admin only)
+- `POST /api/v1/pre-market/data/:id/orders` - Add order book data (admin only)
+- `POST /api/v1/pre-market/multiple-stocks` - Get multiple stocks pre-market data
+
+#### Stock Indices
+- `GET /api/v1/indices` - Get all stock indices
+- `GET /api/v1/indices/:id` - Get index by ID
+- `GET /api/v1/indices/:id/memberships` - Get index memberships
+- `GET /api/v1/indices/:id/composition` - Get index composition summary
+- `GET /api/v1/indices/type/:type` - Get indices by type
+- `GET /api/v1/indices/stocks/:stockId/memberships` - Get stock's index memberships
+- `POST /api/v1/indices` - Create new index (admin only)
+- `PUT /api/v1/indices/:id` - Update index (admin only)
+- `DELETE /api/v1/indices/:id` - Delete index (admin only)
+- `POST /api/v1/indices/:id/stocks` - Add stock to index (admin only)
+- `DELETE /api/v1/indices/:id/stocks/:stockId` - Remove stock from index (admin only)
+- `PUT /api/v1/indices/:id/weights` - Update index weights (admin only)
+
+#### Valuation Metrics
+- `GET /api/v1/valuation/stocks/:stockId` - Get valuation metrics for stock
+- `GET /api/v1/valuation/stocks/:stockId/history` - Get historical valuation data
+- `GET /api/v1/valuation/sector/:sectorId/comparison` - Get sector valuation comparison
+- `GET /api/v1/valuation/pe-comparison/:stockId` - Get P/E comparison vs sector
+- `GET /api/v1/valuation/sector/:sectorId/roe-leaders` - Get ROE leaders in sector
+- `GET /api/v1/valuation/screening` - Screen stocks by valuation criteria
+- `POST /api/v1/valuation/metrics` - Add valuation metrics (admin only)
 
 ## Testing
 
@@ -277,13 +378,21 @@ A Postman collection is provided for manual API testing:
 
 The API uses MySQL with the following key entities:
 
-### Core Tables
+### Core Tables ⭐ **ENHANCED**
 - **Users** - User accounts with role-based permissions
-- **Stocks** - Stock information with market data
-- **StockPrices** - Historical price data with technical indicators
+- **Stocks** - Stock information with **enhanced Indian market data** (ISIN, FNO, surveillance, etc.)
+- **StockPrices** - Historical price data with **Indian market specifics** (VWAP, circuit breakers, 52-week data)
 - **Exchanges** - Stock exchange reference data
-- **Sectors** - Industry sector classifications
+- **Sectors** - Industry sector classifications (legacy)
 - **Currencies** - Supported currencies
+
+### 🇮🇳 Indian Market Tables ⭐ **NEW**
+- **DetailedSectors** - 4-level sector hierarchy (macro → sector → industry → basic industry)
+- **StockIndices** - NIFTY indices and market indices (NIFTY 50, NIFTY 200, etc.)
+- **StockIndexMemberships** - Stock-to-index relationships with weights and rankings
+- **PreMarketData** - Pre-market trading sessions with IEP tracking
+- **PreMarketOrders** - Order book data for pre-market sessions
+- **ValuationMetrics** - Comprehensive financial ratios and valuation data
 
 ### Alert System
 - **Alerts** - User-defined stock alerts with conditions
@@ -304,13 +413,56 @@ The API uses MySQL with the following key entities:
 
 ## Recent Updates
 
-### Latest Features (v1.2.0)
+### 🇮🇳 Major Indian Market Enhancement (v2.0.0) ⭐ **NEW**
+**Released: June 2025**
+
+#### **Database Enhancements**
+- **9 New Migration Files**: Complete Indian stock market database structure
+- **Enhanced Stock Table**: 25+ new Indian-specific fields (ISIN, FNO, surveillance, etc.)
+- **Enhanced Price Table**: 15+ new price fields (VWAP, circuit breakers, 52-week data)
+- **New Tables**: DetailedSectors, StockIndices, PreMarketData, ValuationMetrics
+
+#### **API Enhancements**
+- **4 New API Modules**: Detailed Sectors, Pre-Market, Indices, Valuation
+- **Enhanced Stock APIs**: Indian field support with comprehensive validation
+- **60+ New Endpoints**: Complete Indian market API coverage
+- **Advanced Filtering**: Search by ISIN, FNO status, surveillance stage
+
+#### **Key Features Added**
+- **Pre-Market Trading**: IEP tracking, order book data, session management
+- **NIFTY Indices**: Complete index and membership management
+- **4-Level Sectors**: Detailed industry classification hierarchy
+- **Valuation Metrics**: Comprehensive financial ratios and sector comparisons
+- **Regulatory Compliance**: Surveillance stages, circuit breakers, trading status
+
+#### **Technical Improvements**
+- **Performance Optimized**: Strategic indexing for Indian market queries
+- **Data Integrity**: Proper foreign keys and validation
+- **Comprehensive Validation**: Joi schemas for all new data structures
+- **Enhanced Error Handling**: Indian market specific error responses
+
+### Previous Features (v1.2.0)
 - Enhanced alert validation with camelCase field support
 - Improved stock validation with positive value enforcement
 - Volume field precision improvements (DECIMAL type)
 - Foreign key naming standardization
 - Smart seeder system with duplicate prevention
 - Active record filtering capabilities
+
+### Migration Guide
+
+To upgrade to v2.0.0 with Indian market support:
+
+1. **Run New Migrations**:
+   ```bash
+   npm run migrate
+   ```
+
+2. **Update API Calls**: New endpoints available for Indian market features
+
+3. **Enhanced Data**: Existing stock data enhanced with Indian fields
+
+4. **New Capabilities**: Access to pre-market, indices, and valuation APIs
 
 ## License
 
