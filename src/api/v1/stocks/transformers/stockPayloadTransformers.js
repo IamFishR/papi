@@ -128,7 +128,14 @@ const transformNSEMarketData = (payload) => {
           index_type: 'BROAD_MARKET', // Default, could be improved with mapping
           weightage: null,
           is_active: true
-        })) : []
+        })) : [],
+      
+      industryInfo: data.industryInfo ? {
+        macro: data.industryInfo.macro,
+        sector: data.industryInfo.sector,
+        industry: data.industryInfo.industry,
+        basicIndustry: data.industryInfo.basicIndustry
+      } : null
     };
   }
   

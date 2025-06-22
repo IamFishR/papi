@@ -866,12 +866,52 @@ const getINRCurrencyId = async () => {
 };
 
 /**
+ * Find or create detailed sector based on industry info
+ * @param {Object} industryInfo - Industry information with macro, sector, industry, basicIndustry
+ * @param {Object} transaction - Database transaction
+ * @returns {Promise<Object>} DetailedSector record
+ */
+const findOrCreateDetailedSector = async (industryInfo, transaction = null) => {
+  if (!industryInfo || !industryInfo.macro || !industryInfo.sector || !industryInfo.industry || !industryInfo.basicIndustry) {
+    return null;
+  }
+
+  // Create a unique code from the basic industry
+  const code = industryInfo.basicIndustry
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
+
+  // Try to find existing detailed sector by code
+  let detailedSector = await db.DetailedSector.findOne({
+    where: { code: code },
+    transaction
+  });
+
+  if (!detailedSector) {
+    // Create new detailed sector
+    detailedSector = await db.DetailedSector.create({
+      macroSector: industryInfo.macro,
+      sector: industryInfo.sector, 
+      industry: industryInfo.industry,
+      basicIndustry: industryInfo.basicIndustry,
+      code: code,
+      description: `${industryInfo.macro} > ${industryInfo.sector} > ${industryInfo.industry} > ${industryInfo.basicIndustry}`,
+      isActive: true
+    }, { transaction });
+  }
+
+  return detailedSector;
+};
+
+/**
  * Process complete market data - strategically reusing existing validations and services
  * @param {Object} data - Complete market data object
  * @returns {Promise<Object>} Processing result with all created/updated entities
  */
 const processCompleteMarketData = async (data) => {
-  const { stockInfo, priceInfo, preMarketData, preMarketOrders, valuationMetrics, indexMemberships } = data;
+  const { stockInfo, priceInfo, preMarketData, preMarketOrders, valuationMetrics, indexMemberships, industryInfo } = data;
 
   // Use database transaction to ensure atomicity
   const transaction = await db.sequelize.transaction();
@@ -906,9 +946,22 @@ const processCompleteMarketData = async (data) => {
       validCurrencyId = await getINRCurrencyId();
     }
 
+    // Handle detailed sector - either from stockInfo.sector_detailed_id or industryInfo
+    let detailedSectorId = stockInfo.sector_detailed_id;
+    
+    // If industryInfo is provided, find or create detailed sector
+    if (industryInfo) {
+      const detailedSector = await findOrCreateDetailedSector(industryInfo, transaction);
+      if (detailedSector) {
+        detailedSectorId = detailedSector.id;
+        result.additionalData.detailedSectorProcessed = true;
+        result.additionalData.detailedSectorCreated = detailedSector.isNewRecord !== false;
+      }
+    }
+    
     // Validate sector_detailed_id if provided
-    if (stockInfo.sector_detailed_id && !(await validateDetailedSectorExists(stockInfo.sector_detailed_id))) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, `Detailed sector with ID ${stockInfo.sector_detailed_id} does not exist or is inactive`);
+    if (detailedSectorId && !(await validateDetailedSectorExists(detailedSectorId))) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, `Detailed sector with ID ${detailedSectorId} does not exist or is inactive`);
     }
 
     // Transform field names from snake_case to camelCase for existing validation
@@ -917,7 +970,7 @@ const processCompleteMarketData = async (data) => {
       companyName: stockInfo.company_name,
       description: stockInfo.description,
       exchangeId: validExchangeId,
-      sectorDetailedId: stockInfo.sector_detailed_id,
+      sectorDetailedId: detailedSectorId,
       currencyId: validCurrencyId,
       isin: stockInfo.isin,
       faceValue: stockInfo.face_value,
@@ -992,7 +1045,7 @@ const processCompleteMarketData = async (data) => {
           { model: db.Exchange, as: 'exchange' },
           { model: db.Sector, as: 'sector' },
           { model: db.Currency, as: 'currency' },
-          { model: db.Industry, as: 'industry' }
+          { model: db.DetailedSector, as: 'detailedSector' }
         ],
         transaction
       });
@@ -1026,7 +1079,7 @@ const processCompleteMarketData = async (data) => {
           { model: db.Exchange, as: 'exchange' },
           { model: db.Sector, as: 'sector' },
           { model: db.Currency, as: 'currency' },
-          { model: db.Industry, as: 'industry' }
+          { model: db.DetailedSector, as: 'detailedSector' }
         ],
         transaction
       });
@@ -1223,5 +1276,6 @@ module.exports = {
   bulkUpdatePrices,
   processCompleteMarketData,
   getNSEExchangeId,
-  getINRCurrencyId
+  getINRCurrencyId,
+  findOrCreateDetailedSector
 };

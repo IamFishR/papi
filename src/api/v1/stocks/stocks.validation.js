@@ -460,7 +460,15 @@ const completeMarketData = {
         weightage: Joi.number().min(0).max(100).allow(null),
         is_active: Joi.boolean().default(true)
       })
-    ).max(100).default([])
+    ).max(100).default([]),
+    
+    // Industry information for detailed sector processing
+    industryInfo: Joi.object().keys({
+      macro: Joi.string().min(1).max(100).required(),
+      sector: Joi.string().min(1).max(100).required(),
+      industry: Joi.string().min(1).max(100).required(),
+      basicIndustry: Joi.string().min(1).max(100).required()
+    }).allow(null)
   })
 };
 
