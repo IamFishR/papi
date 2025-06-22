@@ -19,6 +19,15 @@ router.get(
   catchAsync(stocksController.getStocks)
 );
 
+// Bulk update prices from NSE JSON data (admin only)
+router.post(
+  '/bulk/prices',
+  authenticate,
+  authorize('admin'),
+  validate(stocksValidation.bulkUpdatePrices.body),
+  catchAsync(stocksController.bulkUpdatePrices)
+);
+
 // Get stock by ID
 router.get(
   '/:id',

@@ -371,25 +371,25 @@ The trading journal is organized into 6 main sections:
 ## Relationships Summary
 
 ### User-Centric Relationships
-- **Users** ’ **Alerts** (One-to-Many)
-- **Users** ’ **Watchlists** (One-to-Many)
-- **Users** ’ **Trade Journal Entries** (One-to-Many)
-- **Users** ’ **User Preferences** (One-to-One)
+- **Users**  **Alerts** (One-to-Many)
+- **Users**  **Watchlists** (One-to-Many)
+- **Users**  **Trade Journal Entries** (One-to-Many)
+- **Users**  **User Preferences** (One-to-One)
 
 ### Stock Market Data Relationships
-- **Exchanges** ’ **Stocks** (One-to-Many)
-- **Sectors** ’ **Stocks** (One-to-Many)
-- **Currencies** ’ **Stocks** (One-to-Many)
-- **Stocks** ’ **Stock Prices** (One-to-Many)
-- **Stocks** ’ **Alerts** (One-to-Many)
+- **Exchanges**  **Stocks** (One-to-Many)
+- **Sectors**  **Stocks** (One-to-Many)
+- **Currencies**  **Stocks** (One-to-Many)
+- **Stocks**  **Stock Prices** (One-to-Many)
+- **Stocks**  **Alerts** (One-to-Many)
 
 ### Alert System Relationships
-- **Alerts** ’ **Alert History** (One-to-Many)
-- **Alerts** ’ **Notification Queue** (One-to-Many)
+- **Alerts**  **Alert History** (One-to-Many)
+- **Alerts**  **Notification Queue** (One-to-Many)
 - Multiple lookup tables provide reference data for alerts
 
 ### Watchlist Relationships
-- **Watchlists** ” **Stocks** (Many-to-Many via `st_watchlist_stocks`)
+- **Watchlists**  **Stocks** (Many-to-Many via `st_watchlist_stocks`)
 
 ## Indexes and Performance
 

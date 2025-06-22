@@ -185,6 +185,24 @@ const deleteStock = catchAsync(async (req, res) => {
   );
 });
 
+/**
+ * Bulk update stock prices from NSE JSON data
+ * @route POST /api/v1/stocks/bulk/prices
+ * @admin
+ */
+const bulkUpdatePrices = catchAsync(async (req, res) => {
+  const { priceData, priceDate } = req.body;
+  
+  const result = await stockService.bulkUpdatePrices(priceData, priceDate);
+  
+  return apiResponse.success(
+    res,
+    StatusCodes.OK,
+    'Bulk price update completed successfully',
+    result
+  );
+});
+
 module.exports = {
   getStocks,
   getStockById,
@@ -194,5 +212,6 @@ module.exports = {
   getStockIndicators,
   createStock,
   updateStock,
-  deleteStock
+  deleteStock,
+  bulkUpdatePrices
 };

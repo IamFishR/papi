@@ -440,6 +440,117 @@ const deleteStock = async (id) => {
   return stock;
 };
 
+/**
+ * Bulk update stock prices from NSE JSON data
+ * @param {Array} priceData - Array of NSE price data objects
+ * @param {string} priceDate - Date for the price data (YYYY-MM-DD)
+ * @returns {Promise<Object>} Results of bulk update operation
+ */
+const bulkUpdatePrices = async (priceData, priceDate) => {
+  const results = {
+    processed: 0,
+    created: 0,
+    updated: 0,
+    errors: [],
+    skipped: []
+  };
+
+  // Get all active stocks to map symbols to IDs
+  const stocks = await db.Stock.findAll({
+    where: { isActive: true },
+    attributes: ['id', 'symbol'],
+    raw: true
+  });
+
+  const symbolToIdMap = {};
+  stocks.forEach(stock => {
+    symbolToIdMap[stock.symbol] = stock.id;
+  });
+
+  // Process each price data item
+  const priceRecords = [];
+  
+  for (const item of priceData) {
+    try {
+      const stockId = symbolToIdMap[item.symbol];
+      
+      if (!stockId) {
+        results.skipped.push({
+          symbol: item.symbol,
+          reason: 'Stock not found in database'
+        });
+        continue;
+      }
+
+      // Transform NSE data to our price format
+      const priceRecord = {
+        stockId: stockId,
+        priceDate: priceDate,
+        openPrice: item.open || null,
+        closePrice: item.lastPrice || null,
+        highPrice: item.dayHigh || null,
+        lowPrice: item.dayLow || null,
+        volume: item.totalTradedVolume || null,
+        dataSource: 'NSE_MANUAL',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      priceRecords.push(priceRecord);
+      results.processed++;
+      
+    } catch (error) {
+      results.errors.push({
+        symbol: item.symbol,
+        error: error.message
+      });
+    }
+  }
+
+  // Bulk upsert to database
+  if (priceRecords.length > 0) {
+    try {
+      const bulkResult = await db.StockPrice.bulkCreate(priceRecords, {
+        updateOnDuplicate: [
+          'openPrice', 
+          'closePrice', 
+          'highPrice', 
+          'lowPrice', 
+          'volume', 
+          'dataSource', 
+          'updatedAt'
+        ],
+        returning: true
+      });
+
+      // Count created vs updated (approximate - Sequelize doesn't provide exact counts)
+      results.created = bulkResult.length;
+      
+    } catch (error) {
+      throw new ApiError(
+        StatusCodes.INTERNAL_SERVER_ERROR, 
+        `Bulk price update failed: ${error.message}`
+      );
+    }
+  }
+
+  return {
+    summary: {
+      totalSubmitted: priceData.length,
+      processed: results.processed,
+      created: results.created,
+      updated: results.updated,
+      skipped: results.skipped.length,
+      errors: results.errors.length
+    },
+    details: {
+      skipped: results.skipped,
+      errors: results.errors
+    },
+    priceDate: priceDate
+  };
+};
+
 module.exports = {
   getStocks,
   getStockById,
@@ -450,5 +561,6 @@ module.exports = {
   createStock,
   updateStock,
   deleteStock,
-  validateStockDependencies
+  validateStockDependencies,
+  bulkUpdatePrices
 };

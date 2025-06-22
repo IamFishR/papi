@@ -1,22 +1,25 @@
 /**
- * Sector model definition
+ * Industry model definition
  */
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
-  const Sector = sequelize.define('Sector', {
+  const Industry = sequelize.define('Industry', {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
-    code: {
-      type: DataTypes.STRING(20),
+    sectorId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-      unique: true,
+      field: 'sector_id',
+      references: {
+        model: 'st_sectors',
+        key: 'id',
+      },
       validate: {
         notEmpty: true,
-        len: [1, 20],
       },
     },
     name: {
@@ -38,36 +41,39 @@ module.exports = (sequelize) => {
       field: 'is_active',
     },
   }, {
-    tableName: 'st_sectors',
+    tableName: 'st_industries',
     timestamps: true,
     underscored: true,
     indexes: [
       {
-        fields: ['code'],
+        fields: ['sector_id'],
       },
       {
         fields: ['is_active'],
       },
+      {
+        fields: ['name'],
+      },
     ],
   });
 
-  Sector.associate = (models) => {
-    // Sector has many stocks
-    if (models.Stock) {
-      Sector.hasMany(models.Stock, {
+  Industry.associate = (models) => {
+    // Industry belongs to a sector
+    if (models.Sector) {
+      Industry.belongsTo(models.Sector, {
         foreignKey: 'sector_id',
-        as: 'stocks',
+        as: 'sector',
       });
     }
 
-    // Sector has many industries
-    if (models.Industry) {
-      Sector.hasMany(models.Industry, {
-        foreignKey: 'sector_id',
-        as: 'industries',
+    // Industry has many stocks
+    if (models.Stock) {
+      Industry.hasMany(models.Stock, {
+        foreignKey: 'industry_id',
+        as: 'stocks',
       });
     }
   };
 
-  return Sector;
+  return Industry;
 };

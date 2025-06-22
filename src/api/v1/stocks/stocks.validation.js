@@ -143,6 +143,29 @@ const deleteStock = {
   }),
 };
 
+/**
+ * Schema for bulk updating prices from NSE JSON data
+ */
+const bulkUpdatePrices = {
+  body: Joi.object().keys({
+    priceData: Joi.array().items(
+      Joi.object().keys({
+        symbol: Joi.string().required(),
+        identifier: Joi.string().allow(''),
+        open: Joi.number().positive().allow(null),
+        dayHigh: Joi.number().positive().allow(null),
+        dayLow: Joi.number().positive().allow(null),
+        lastPrice: Joi.number().positive().allow(null),
+        previousClose: Joi.number().positive().allow(null),
+        totalTradedVolume: Joi.number().integer().min(0).allow(null),
+        lastUpdateTime: Joi.string().allow(''),
+        meta: Joi.object().allow(null)
+      }).required()
+    ).min(1).required(),
+    priceDate: Joi.date().iso().default(() => new Date().toISOString().split('T')[0])
+  })
+};
+
 module.exports = {
   listStocks,
   getStockById,
@@ -153,4 +176,5 @@ module.exports = {
   createStock,
   updateStock,
   deleteStock,
+  bulkUpdatePrices,
 };

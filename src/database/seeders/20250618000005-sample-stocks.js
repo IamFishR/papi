@@ -18,126 +18,62 @@ module.exports = {
       'SELECT id, code FROM st_exchanges',
       { type: Sequelize.QueryTypes.SELECT }
     );
-    
+
     // Get sector IDs
     const sectors = await queryInterface.sequelize.query(
       'SELECT id, name FROM st_sectors',
       { type: Sequelize.QueryTypes.SELECT }
     );
-    
+
+    // Get industry IDs
+    const industries = await queryInterface.sequelize.query(
+      'SELECT id, name, sector_id FROM st_industries',
+      { type: Sequelize.QueryTypes.SELECT }
+    );
+
     // Get currency IDs
     const currencies = await queryInterface.sequelize.query(
       'SELECT id, code FROM st_currencies',
       { type: Sequelize.QueryTypes.SELECT }
     );
-    
+
     // Map exchange codes to their IDs
     const exchangeMap = {};
     exchanges.forEach(exchange => {
       exchangeMap[exchange.code] = exchange.id;
     });
-    
+
     // Map sector names to their IDs
     const sectorMap = {};
     sectors.forEach(sector => {
       sectorMap[sector.name] = sector.id;
     });
-    
+
+    // Map industry names to their IDs
+    const industryMap = {};
+    industries.forEach(industry => {
+      industryMap[industry.name] = industry.id;
+    });
+
     // Map currency codes to their IDs
     const currencyMap = {};
     currencies.forEach(currency => {
       currencyMap[currency.code] = currency.id;
     });
-    
-    // Sample stocks to seed
+
+    // Sample Indian stocks to seed
     await queryInterface.bulkInsert('st_stocks', [
       {
-        symbol: 'AAPL',
-        company_name: 'Apple Inc.',        description: 'Technology company that designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories.',
-        exchange_id: exchangeMap['NASDAQ'],
-        sector_id: sectorMap['Information Technology'],
-        currency_id: currencyMap['USD'],
-        market_cap: 3000000000000,
-        pe_ratio: 28.5,
-        dividend_yield: 0.5,
-        beta: 1.2,
-        is_active: true,
-        last_updated: new Date(),
-        created_at: new Date(),
-        updated_at: new Date()
-      },
-      {
-        symbol: 'MSFT',
-        company_name: 'Microsoft Corporation',        description: 'Technology company that develops, licenses, and supports software, services, devices, and solutions.',
-        exchange_id: exchangeMap['NASDAQ'],
-        sector_id: sectorMap['Information Technology'],
-        currency_id: currencyMap['USD'],
-        market_cap: 2500000000000,
-        pe_ratio: 30.2,
-        dividend_yield: 0.8,
-        beta: 0.95,
-        is_active: true,
-        last_updated: new Date(),
-        created_at: new Date(),
-        updated_at: new Date()
-      },
-      {
-        symbol: 'GOOGL',
-        company_name: 'Alphabet Inc.',        description: 'Technology company that provides online advertising services, search engine, cloud computing, software, and hardware.',
-        exchange_id: exchangeMap['NASDAQ'],
-        sector_id: sectorMap['Information Technology'],
-        currency_id: currencyMap['USD'],
-        market_cap: 1800000000000,
-        pe_ratio: 25.1,
-        dividend_yield: 0,
-        beta: 1.05,
-        is_active: true,
-        last_updated: new Date(),
-        created_at: new Date(),
-        updated_at: new Date()
-      },
-      {
-        symbol: 'AMZN',
-        company_name: 'Amazon.com, Inc.',
-        description: 'E-commerce and cloud computing company.',
-        exchange_id: exchangeMap['NASDAQ'],
-        sector_id: sectorMap['Consumer Discretionary'],
-        currency_id: currencyMap['USD'],
-        market_cap: 1700000000000,
-        pe_ratio: 60.5,
-        dividend_yield: 0,
-        beta: 1.15,
-        is_active: true,
-        last_updated: new Date(),
-        created_at: new Date(),
-        updated_at: new Date()
-      },
-      {
-        symbol: 'TSLA',
-        company_name: 'Tesla, Inc.',
-        description: 'Electric vehicle and clean energy company.',
-        exchange_id: exchangeMap['NASDAQ'],
-        sector_id: sectorMap['Consumer Discretionary'],
-        currency_id: currencyMap['USD'],
-        market_cap: 800000000000,
-        pe_ratio: 80.2,
-        dividend_yield: 0,
-        beta: 1.8,
-        is_active: true,
-        last_updated: new Date(),
-        created_at: new Date(),
-        updated_at: new Date()
-      },
-      {
-        symbol: 'JPM',
-        company_name: 'JPMorgan Chase & Co.',
-        description: 'Multinational investment bank and financial services company.',
-        exchange_id: exchangeMap['NYSE'],
-        sector_id: sectorMap['Financials'],
-        currency_id: currencyMap['USD'],
-        market_cap: 450000000000,
+        symbol: 'RELIANCE',
+        company_name: 'Reliance Industries Ltd.',
+        description: 'Indian multinational conglomerate engaged in petrochemicals, oil & gas, telecom, and retail.',
+        exchange_id: exchangeMap['NSE'],
+        sector_id: sectorMap['Energy'],
+        industry_id: industryMap['Petrochemicals'],
+        currency_id: currencyMap['INR'],
+        market_cap: 1500000000000,
         pe_ratio: 12.5,
-        dividend_yield: 2.8,
+        dividend_yield: 0.5,
         beta: 1.1,
         is_active: true,
         last_updated: new Date(),
@@ -145,31 +81,152 @@ module.exports = {
         updated_at: new Date()
       },
       {
-        symbol: 'JNJ',
-        company_name: 'Johnson & Johnson',
-        description: 'Medical devices, pharmaceutical and consumer packaged goods company.',
-        exchange_id: exchangeMap['NYSE'],
-        sector_id: sectorMap['Healthcare'],
-        currency_id: currencyMap['USD'],
-        market_cap: 430000000000,
-        pe_ratio: 24.2,
-        dividend_yield: 2.5,
-        beta: 0.7,
+        symbol: 'TCS',
+        company_name: 'Tata Consultancy Services Ltd.',
+        description: 'Indian multinational IT services and consulting company.',
+        exchange_id: exchangeMap['NSE'],
+        sector_id: sectorMap['IT Industry'],
+        industry_id: industryMap['IT - Software '],
+        currency_id: currencyMap['INR'],
+        market_cap: 1200000000000,
+        pe_ratio: 28.5,
+        dividend_yield: 3.2,
+        beta: 0.9,
         is_active: true,
         last_updated: new Date(),
         created_at: new Date(),
         updated_at: new Date()
       },
       {
-        symbol: 'V',
-        company_name: 'Visa Inc.',
-        description: 'Multinational financial services corporation.',
-        exchange_id: exchangeMap['NYSE'],
-        sector_id: sectorMap['Financials'],
-        currency_id: currencyMap['USD'],
-        market_cap: 490000000000,
-        pe_ratio: 32.8,
+        symbol: 'HDFCBANK',
+        company_name: 'HDFC Bank Ltd.',
+        description: 'Indian private sector bank offering banking and financial services.',
+        exchange_id: exchangeMap['NSE'],
+        sector_id: sectorMap['Banking'],
+        industry_id: industryMap['Bank - Private'],
+        currency_id: currencyMap['INR'],
+        market_cap: 800000000000,
+        pe_ratio: 18.2,
+        dividend_yield: 1.0,
+        beta: 1.0,
+        is_active: true,
+        last_updated: new Date(),
+        created_at: new Date(),
+        updated_at: new Date()
+      },
+      {
+        symbol: 'INFY',
+        company_name: 'Infosys Ltd.',
+        description: 'Indian multinational IT corporation providing business consulting, information technology and outsourcing services.',
+        exchange_id: exchangeMap['NSE'],
+        sector_id: sectorMap['IT Industry'],
+        industry_id: industryMap['IT - Software '],
+        currency_id: currencyMap['INR'],
+        market_cap: 700000000000,
+        pe_ratio: 24.8,
+        dividend_yield: 2.5,
+        beta: 0.85,
+        is_active: true,
+        last_updated: new Date(),
+        created_at: new Date(),
+        updated_at: new Date()
+      },
+      {
+        symbol: 'HINDUNILVR',
+        company_name: 'Hindustan Unilever Ltd.',
+        description: 'Indian consumer goods company manufacturing personal care products, foods, and beverages.',
+        exchange_id: exchangeMap['NSE'],
+        sector_id: sectorMap['FMCG'],
+        industry_id: industryMap['Household & Personal Products'],
+        currency_id: currencyMap['INR'],
+        market_cap: 500000000000,
+        pe_ratio: 55.2,
+        dividend_yield: 2.8,
+        beta: 0.6,
+        is_active: true,
+        last_updated: new Date(),
+        created_at: new Date(),
+        updated_at: new Date()
+      },
+      {
+        symbol: 'ICICIBANK',
+        company_name: 'ICICI Bank Ltd.',
+        description: 'Indian multinational bank and financial services company.',
+        exchange_id: exchangeMap['NSE'],
+        sector_id: sectorMap['Banking'],
+        industry_id: industryMap['Bank - Private'],
+        currency_id: currencyMap['INR'],
+        market_cap: 450000000000,
+        pe_ratio: 15.8,
+        dividend_yield: 0.8,
+        beta: 1.2,
+        is_active: true,
+        last_updated: new Date(),
+        created_at: new Date(),
+        updated_at: new Date()
+      },
+      {
+        symbol: 'BHARTIARTL',
+        company_name: 'Bharti Airtel Ltd.',
+        description: 'Indian multinational telecommunications services company.',
+        exchange_id: exchangeMap['NSE'],
+        sector_id: sectorMap['Tele-Communication'],
+        industry_id: industryMap['Telecommunication - Service  Provider'],
+        currency_id: currencyMap['INR'],
+        market_cap: 400000000000,
+        pe_ratio: 32.5,
         dividend_yield: 0.7,
+        beta: 1.3,
+        is_active: true,
+        last_updated: new Date(),
+        created_at: new Date(),
+        updated_at: new Date()
+      },
+      {
+        symbol: 'KOTAKBANK',
+        company_name: 'Kotak Mahindra Bank Ltd.',
+        description: 'Indian private sector bank offering commercial banking products and services.',
+        exchange_id: exchangeMap['NSE'],
+        sector_id: sectorMap['Banking'],
+        industry_id: industryMap['Bank - Private'],
+        currency_id: currencyMap['INR'],
+        market_cap: 320000000000,
+        pe_ratio: 20.5,
+        dividend_yield: 0.6,
+        beta: 1.1,
+        is_active: true,
+        last_updated: new Date(),
+        created_at: new Date(),
+        updated_at: new Date()
+      },
+      {
+        symbol: 'LT',
+        company_name: 'Larsen & Toubro Ltd.',
+        description: 'Indian multinational conglomerate engaged in engineering, construction, and technology.',
+        exchange_id: exchangeMap['NSE'],
+        sector_id: sectorMap['Industries'],
+        industry_id: industryMap['Engineering - Construction'],
+        currency_id: currencyMap['INR'],
+        market_cap: 280000000000,
+        pe_ratio: 26.8,
+        dividend_yield: 1.2,
+        beta: 1.4,
+        is_active: true,
+        last_updated: new Date(),
+        created_at: new Date(),
+        updated_at: new Date()
+      },
+      {
+        symbol: 'HCLTECH',
+        company_name: 'HCL Technologies Ltd.',
+        description: 'Indian multinational IT services company.',
+        exchange_id: exchangeMap['NSE'],
+        sector_id: sectorMap['IT Industry'],
+        industry_id: industryMap['IT - Software '],
+        currency_id: currencyMap['INR'],
+        market_cap: 270000000000,
+        pe_ratio: 18.5,
+        dividend_yield: 3.5,
         beta: 0.95,
         is_active: true,
         last_updated: new Date(),
@@ -177,31 +234,34 @@ module.exports = {
         updated_at: new Date()
       },
       {
-        symbol: 'PG',
-        company_name: 'Procter & Gamble Co.',
-        description: 'Consumer goods corporation.',
-        exchange_id: exchangeMap['NYSE'],
-        sector_id: sectorMap['Consumer Staples'],
-        currency_id: currencyMap['USD'],
-        market_cap: 350000000000,
-        pe_ratio: 25.6,
-        dividend_yield: 2.4,
-        beta: 0.4,
+        symbol: 'MARUTI',
+        company_name: 'Maruti Suzuki India Ltd.',
+        description: 'Indian automobile manufacturer, largest passenger car company in India.',
+        exchange_id: exchangeMap['NSE'],
+        sector_id: sectorMap['Automobile & Ancillaries'],
+        industry_id: industryMap['Automobiles - Passenger Cars'],
+        currency_id: currencyMap['INR'],
+        market_cap: 250000000000,
+        pe_ratio: 28.2,
+        dividend_yield: 1.8,
+        beta: 1.0,
         is_active: true,
         last_updated: new Date(),
         created_at: new Date(),
         updated_at: new Date()
       },
       {
-        symbol: 'NVDA',
-        company_name: 'NVIDIA Corporation',        description: 'Technology company that designs graphics processing units (GPUs) and system on a chip units (SoCs).',
-        exchange_id: exchangeMap['NASDAQ'],
-        sector_id: sectorMap['Information Technology'],
-        currency_id: currencyMap['USD'],
-        market_cap: 1200000000000,
-        pe_ratio: 75.3,
-        dividend_yield: 0.05,
-        beta: 1.6,
+        symbol: 'SBIN',
+        company_name: 'State Bank of India',
+        description: 'Indian multinational public sector banking and financial services company.',
+        exchange_id: exchangeMap['NSE'],
+        sector_id: sectorMap['Banking'],
+        industry_id: industryMap['Bank - Public'],
+        currency_id: currencyMap['INR'],
+        market_cap: 240000000000,
+        pe_ratio: 9.5,
+        dividend_yield: 4.2,
+        beta: 1.3,
         is_active: true,
         last_updated: new Date(),
         created_at: new Date(),
@@ -210,7 +270,7 @@ module.exports = {
     ]);
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.bulkDelete('st_stocks', null, {});
   }
 };

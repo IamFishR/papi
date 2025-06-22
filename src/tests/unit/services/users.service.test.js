@@ -1,4 +1,4 @@
-/**
+ /**
  * User service unit tests
  */
 const { expect } = require('chai');
