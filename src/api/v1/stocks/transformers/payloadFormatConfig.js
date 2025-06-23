@@ -81,27 +81,6 @@ const PAYLOAD_FORMATS = {
     endpoints: ['/complete-market-data']
   },
   
-  // Future format examples:
-  BLOOMBERG_FORMAT: {
-    name: 'Bloomberg Data Format',
-    description: 'Bloomberg API format',
-    detector: (payload) => {
-      return payload.bloomberg_data && payload.security_info;
-    },
-    transformer: null, // To be implemented
-    endpoints: ['/complete-market-data']
-  },
-  
-  YAHOO_FINANCE_FORMAT: {
-    name: 'Yahoo Finance Format',
-    description: 'Yahoo Finance API format',
-    detector: (payload) => {
-      return payload.quoteSummary && payload.quoteSummary.result;
-    },
-    transformer: null, // To be implemented
-    endpoints: ['/complete-market-data']
-  },
-  
   STANDARD_API_FORMAT: {
     name: 'Standard API Format',
     description: 'Our standard API format',

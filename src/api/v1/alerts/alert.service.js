@@ -6,6 +6,7 @@ const { Op } = require('sequelize');
 const ApiError = require('../../../core/utils/ApiError');
 const errorMessages = require('../../../constants/errorMessages');
 const db = require('../../../database/models');
+const logger = require('../../../config/logger');
 
 /**
  * Get alerts with filtering options
@@ -48,7 +49,7 @@ const getAlerts = async (filter, options, userId) => {
     offset,
     order: [[sortBy || 'created_at', sortOrder || 'DESC']],
     include: [
-      { model: db.Stock, as: 'stock' },
+      { model: db.Stock, as: 'stock', attributes: ['id', 'symbol', 'companyName'] },
       { model: db.TriggerType, as: 'triggerType' },
       { model: db.ThresholdCondition, as: 'thresholdCondition' },
       { model: db.VolumeCondition, as: 'volumeCondition' },
@@ -83,7 +84,7 @@ const getAlertById = async (id, userId) => {
       userId
     },
     include: [
-      { model: db.Stock, as: 'stock' },
+      { model: db.Stock, as: 'stock', attributes: ['id', 'symbol', 'companyName'] },
       { model: db.TriggerType, as: 'triggerType' },
       { model: db.ThresholdCondition, as: 'thresholdCondition' },
       { model: db.VolumeCondition, as: 'volumeCondition' },
@@ -245,7 +246,7 @@ const getAlertHistory = async (filter, options, userId) => {
           { model: db.TriggerType, as: 'triggerType' }
         ]
       },
-      { model: db.Stock, as: 'stock' }
+      { model: db.Stock, as: 'stock', attributes: ['id', 'symbol', 'companyName'] }
     ]
   });
 
@@ -269,7 +270,7 @@ const processAlerts = async () => {
   const alerts = await db.Alert.findAll({
     where: { isActive: true },
     include: [
-      { model: db.Stock, as: 'stock' },
+      { model: db.Stock, as: 'stock', attributes: ['id', 'symbol', 'companyName'] },
       { model: db.TriggerType, as: 'triggerType' },
       { model: db.ThresholdCondition, as: 'thresholdCondition' },
       { model: db.VolumeCondition, as: 'volumeCondition' },
@@ -322,7 +323,7 @@ const processAlerts = async () => {
 /**
  * Check if an alert's conditions are met
  * @param {Object} alert - Alert object with related data
- * @returns {Promise<boolean>} True if alert conditions are met
+ * @returns {Promise<boolean} True if alert conditions are met
  */
 const checkAlertConditions = async (alert) => {
   // Different logic based on trigger type
@@ -362,7 +363,7 @@ const checkPriceAlertConditions = async (alert) => {
 
   // Check condition based on threshold condition
   const price = latestPrice.price;
-  const threshold = alert.thresholdValue;
+  const threshold = alert.priceThreshold; // Changed from thresholdValue to priceThreshold
   
   switch (alert.thresholdCondition.name) {
     case 'above':
@@ -606,7 +607,7 @@ const createAlertHistory = async (alert) => {
     userId: alert.userId,
     stockId: alert.stockId,
     triggerValue,
-    thresholdValue: alert.thresholdValue,
+    thresholdValue: alert.priceThreshold, // Changed from thresholdValue to priceThreshold
     triggeredAt: new Date()
   });
 
@@ -641,7 +642,7 @@ const queueAlertNotification = async (alert) => {
         order: [['created_at', 'DESC']]
       });
       
-      notificationContent = `${stock.symbol} price alert: Current price $${stockPrice.price} is ${alert.thresholdCondition.name} your threshold of $${alert.thresholdValue}`;
+      notificationContent = `${stock.symbol} price alert: Current price $${stockPrice.price} is ${alert.thresholdCondition.name} your threshold of $${alert.priceThreshold}`; // Changed from thresholdValue to priceThreshold
       break;
     
     case 'volume':
@@ -762,10 +763,28 @@ const processAllAlerts = async () => {
         isActive: true,
         triggerTypeId: 1 // Price alerts
       },
-      include: [{
-        model: db.Stock,
-        attributes: ['id', 'symbol', 'name']
-      }]
+      include: [
+        {
+          model: db.Stock,
+          as: 'stock',
+          attributes: ['id', 'symbol', 'companyName'] // Changed 'name' to 'companyName'
+        },
+        {
+          model: db.ThresholdCondition,
+          as: 'thresholdCondition',
+          attributes: ['id', 'name']
+        },
+        {
+          model: db.TriggerType,
+          as: 'triggerType',
+          attributes: ['id', 'name']
+        }
+      ],
+      // Add attributes option to explicitly select only the columns we need
+      attributes: [
+        'id', 'userId', 'stockId', 'triggerTypeId', 'name', 'description',
+        'priceThreshold', 'thresholdConditionId', 'isActive', 'lastTriggered'
+      ]
     });
 
     logger.info(`Processing ${alerts.length} active alerts`);
@@ -773,7 +792,22 @@ const processAllAlerts = async () => {
     // Process each alert
     for (const alert of alerts) {
       try {
-        await checkPriceAlertConditions(alert);
+        const isTriggered = await checkAlertConditions(alert);
+        
+        if (isTriggered) {
+          // Record alert history
+          await createAlertHistory(alert);
+          
+          // Queue notification
+          await queueAlertNotification(alert);
+          
+          // Update last triggered time
+          await alert.update({
+            lastTriggered: new Date()
+          });
+          
+          logger.info(`Alert triggered: ${alert.id} - ${alert.name}`);
+        }
       } catch (error) {
         logger.error(`Error processing alert ${alert.id}:`, error);
       }

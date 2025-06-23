@@ -35,8 +35,8 @@ router.post(
   '/bulk/prices/live',
   authenticate,
   authorize('admin'),
-  payloadTransformer(createTransformerForEndpoint('/bulk/prices/live')),
   validate(stocksValidation.bulkUpdateLivePrices.body),
+  payloadTransformer(createTransformerForEndpoint('/bulk/prices/live')),
   catchAsync(stocksController.bulkUpdateLivePrices)
 );
 
@@ -45,8 +45,8 @@ router.post(
   '/complete-market-data',
   authenticate,
   authorize('admin'),
-  payloadTransformer(createTransformerForEndpoint('/complete-market-data')),
   validate(stocksValidation.completeMarketData.body),
+  payloadTransformer(createTransformerForEndpoint('/complete-market-data')),
   catchAsync(stocksController.completeMarketData)
 );
 

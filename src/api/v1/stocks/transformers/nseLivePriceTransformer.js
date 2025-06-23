@@ -56,24 +56,33 @@ const transformNSELivePrice = (payload) => {
     return {
       symbol: stock.symbol,
       identifier: stock.identifier || null,
-      open: stock.open || null,
-      dayHigh: stock.dayHigh || null,
-      dayLow: stock.dayLow || null,
-      lastPrice: stock.lastPrice || null,
-      previousClose: stock.previousClose || null,
-      change: stock.change || null,
-      pChange: stock.pChange || null,
-      totalTradedVolume: stock.totalTradedVolume || null,
-      totalTradedValue: stock.totalTradedValue || null,
+      open: typeof stock.open === 'number' ? stock.open : null,
+      dayHigh: typeof stock.dayHigh === 'number' ? stock.dayHigh : null,
+      dayLow: typeof stock.dayLow === 'number' ? stock.dayLow : null,
+      lastPrice: typeof stock.lastPrice === 'number' ? stock.lastPrice : null,
+      previousClose: typeof stock.previousClose === 'number' ? stock.previousClose : null,
+      change: typeof stock.change === 'number' ? stock.change : null,
+      pChange: typeof stock.pChange === 'number' ? stock.pChange : null,
+      totalTradedVolume: typeof stock.totalTradedVolume === 'number' ? stock.totalTradedVolume : null,
+      totalTradedValue: typeof stock.totalTradedValue === 'number' ? stock.totalTradedValue : null,
       lastUpdateTime: stock.lastUpdateTime ? parseNSEDate(stock.lastUpdateTime) : null,
-      yearHigh: stock.yearHigh || null,
-      yearLow: stock.yearLow || null,
-      nearWKH: stock.nearWKH || null,
-      nearWKL: stock.nearWKL || null,
-      perChange365d: stock.perChange365d || null,
-      perChange30d: stock.perChange30d || null,
+      yearHigh: typeof stock.yearHigh === 'number' ? stock.yearHigh : null,
+      yearLow: typeof stock.yearLow === 'number' ? stock.yearLow : null,
+      nearWKH: typeof stock.nearWKH === 'number' ? stock.nearWKH : null,
+      nearWKL: typeof stock.nearWKL === 'number' ? stock.nearWKL : null,
+      perChange365d: typeof stock.perChange365d === 'number' ? stock.perChange365d : null,
+      perChange30d: typeof stock.perChange30d === 'number' ? stock.perChange30d : null,
       series: stock.series || null,
-      meta: stock.meta || null
+      meta: stock.meta || null,
+      // Pass through additional fields
+      priority: typeof stock.priority === 'number' ? stock.priority : null,
+      stockIndClosePrice: typeof stock.stockIndClosePrice === 'number' ? stock.stockIndClosePrice : null,
+      ffmc: typeof stock.ffmc === 'number' ? stock.ffmc : null,
+      date365dAgo: stock.date365dAgo || null,
+      chart365dPath: stock.chart365dPath || null,
+      date30dAgo: stock.date30dAgo || null,
+      chart30dPath: stock.chart30dPath || null,
+      chartTodayPath: stock.chartTodayPath || null
     };
   }).filter(Boolean); // Remove null entries
   
@@ -87,7 +96,10 @@ const transformNSELivePrice = (payload) => {
       unchanged: payload.advance?.unchanged || "0",
       timestamp: payload.timestamp,
       metadata: payload.metadata || null,
-      marketStatus: payload.marketStatus || null
+      marketStatus: payload.marketStatus || null,
+      // Pass through additional top-level fields
+      date30dAgo: payload.date30dAgo || null,
+      date365dAgo: payload.date365dAgo || null
     }
   };
 };

@@ -229,12 +229,12 @@ const completeMarketData = catchAsync(async (req, res) => {
  * @admin
  */
 const bulkUpdateLivePrices = catchAsync(async (req, res) => {
-  const transformedData = transformNSELivePrice(req.body);
+  // const transformedData = transformNSELivePrice(req.body);
   
   const result = await bulkLivePriceService(
-    transformedData.priceData, 
-    transformedData.priceDate,
-    transformedData.marketData
+    req.body.priceData, 
+    req.body.priceDate,
+    req.body.marketData
   );
 
   return apiResponse.success(

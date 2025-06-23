@@ -477,7 +477,100 @@ const completeMarketData = {
  */
 const bulkUpdateLivePrices = {
   body: Joi.object().keys({
+    // Option 1: Original input format (before transformation)
     data: Joi.array().items(
+      Joi.object().keys({
+      symbol: Joi.string().required(),
+      identifier: Joi.string().allow(null),
+      open: Joi.alternatives().try(
+        Joi.number(),
+        Joi.string().empty('').default(null)
+      ).allow(null),
+      dayHigh: Joi.alternatives().try(
+        Joi.number(),
+        Joi.string().empty('').default(null)
+      ).allow(null),
+      dayLow: Joi.alternatives().try(
+        Joi.number(),
+        Joi.string().empty('').default(null)
+      ).allow(null),
+      lastPrice: Joi.alternatives().try(
+        Joi.number(),
+        Joi.string().empty('').default(null)
+      ).allow(null),
+      previousClose: Joi.alternatives().try(
+        Joi.number(),
+        Joi.string().empty('').default(null)
+      ).allow(null),
+      change: Joi.alternatives().try(
+        Joi.number(),
+        Joi.string().empty('').default(null)
+      ).allow(null),
+      pChange: Joi.alternatives().try(
+        Joi.number(),
+        Joi.string().empty('').default(null)
+      ).allow(null),
+      totalTradedVolume: Joi.alternatives().try(
+        Joi.number().integer().min(0),
+        Joi.string().empty('').default(null)
+      ).allow(null),
+      totalTradedValue: Joi.alternatives().try(
+        Joi.number(),
+        Joi.string().empty('').default(null)
+      ).allow(null),
+      lastUpdateTime: Joi.string().allow(null),
+      yearHigh: Joi.alternatives().try(
+        Joi.number(),
+        Joi.string().empty('').default(null)
+      ).allow(null),
+      yearLow: Joi.alternatives().try(
+        Joi.number(),
+        Joi.string().empty('').default(null)
+      ).allow(null),
+      nearWKH: Joi.alternatives().try(
+        Joi.number(),
+        Joi.string().empty('').default(null)
+      ).allow(null),
+      nearWKL: Joi.alternatives().try(
+        Joi.number(),
+        Joi.string().empty('').default(null)
+      ).allow(null),
+      perChange365d: Joi.alternatives().try(
+        Joi.number(),
+        Joi.string().empty('').default(null)
+      ).allow(null),
+      perChange30d: Joi.alternatives().try(
+        Joi.number(),
+        Joi.string().empty('').default(null)
+      ).allow(null),
+      series: Joi.string().allow(null),
+      meta: Joi.object().allow(null),
+        // Additional fields from real-world NSE data
+        priority: Joi.number().allow(null),
+        stockIndClosePrice: Joi.number().allow(null),
+        ffmc: Joi.number().allow(null),
+        date365dAgo: Joi.string().allow(null),
+        chart365dPath: Joi.string().allow(null),
+        date30dAgo: Joi.string().allow(null),
+        chart30dPath: Joi.string().allow(null),
+        chartTodayPath: Joi.string().allow(null)
+      })
+    ),
+    name: Joi.string().allow(null),
+    timestamp: Joi.string(),
+    advance: Joi.object().keys({
+      declines: Joi.string().allow(null),
+      advances: Joi.string().allow(null),
+      unchanged: Joi.string().allow(null)
+    }).allow(null),
+    metadata: Joi.object().allow(null),
+    marketStatus: Joi.object().allow(null),
+    // Additional top-level fields
+    date30dAgo: Joi.string().allow(null),
+    date365dAgo: Joi.string().allow(null),
+    
+    // Option 2: Transformed format (after transformation)
+    priceData: Joi.array().items(
       Joi.object().keys({
         symbol: Joi.string().required(),
         identifier: Joi.string().allow(null),
@@ -498,19 +591,32 @@ const bulkUpdateLivePrices = {
         perChange365d: Joi.number().allow(null),
         perChange30d: Joi.number().allow(null),
         series: Joi.string().allow(null),
-        meta: Joi.object().allow(null)
+        meta: Joi.object().allow(null),
+        // Additional fields from real-world NSE data
+        priority: Joi.number().allow(null),
+        stockIndClosePrice: Joi.number().allow(null),
+        ffmc: Joi.number().allow(null),
+        date365dAgo: Joi.string().allow(null),
+        chart365dPath: Joi.string().allow(null),
+        date30dAgo: Joi.string().allow(null),
+        chart30dPath: Joi.string().allow(null),
+        chartTodayPath: Joi.string().allow(null)
       })
-    ).min(1).required(),
-    name: Joi.string().allow(null),
-    timestamp: Joi.string().required(),
-    advance: Joi.object().keys({
-      declines: Joi.string().allow(null),
+    ),
+    priceDate: Joi.string(),
+    marketData: Joi.object().keys({
+      name: Joi.string().allow(null),
       advances: Joi.string().allow(null),
-      unchanged: Joi.string().allow(null)
-    }).allow(null),
-    metadata: Joi.object().allow(null),
-    marketStatus: Joi.object().allow(null)
-  }).required()
+      declines: Joi.string().allow(null),
+      unchanged: Joi.string().allow(null),
+      timestamp: Joi.string().allow(null),
+      metadata: Joi.object().allow(null),
+      marketStatus: Joi.object().allow(null),
+      // Additional top-level fields that might be placed in marketData during transformation
+      date30dAgo: Joi.string().allow(null),
+      date365dAgo: Joi.string().allow(null)
+    }).allow(null)
+  }).or('data', 'priceData').required()
 };
 
 module.exports = {
