@@ -37,4 +37,9 @@ router.use('/reference', referenceRoutes);
 // Register system management routes
 router.use('/system', systemRoutes);
 
+// Note: Additional route modules exist but are not registered:
+// - pre-market routes (./pre-market/pre-market.route.js)
+// - indices routes (./indices/indices.route.js) 
+// - sectors routes (./sectors/sectors.route.js)
+
 module.exports = router;

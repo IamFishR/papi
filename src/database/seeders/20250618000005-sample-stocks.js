@@ -19,15 +19,9 @@ module.exports = {
       { type: Sequelize.QueryTypes.SELECT }
     );
 
-    // Get sector IDs
-    const sectors = await queryInterface.sequelize.query(
-      'SELECT id, name FROM st_sectors',
-      { type: Sequelize.QueryTypes.SELECT }
-    );
-
-    // Get industry IDs
-    const industries = await queryInterface.sequelize.query(
-      'SELECT id, name, sector_id FROM st_industries',
+    // Get detailed sector IDs
+    const detailedSectors = await queryInterface.sequelize.query(
+      'SELECT id, code, macro_sector, sector, industry, basic_industry FROM st_detailed_sectors',
       { type: Sequelize.QueryTypes.SELECT }
     );
 
@@ -43,16 +37,10 @@ module.exports = {
       exchangeMap[exchange.code] = exchange.id;
     });
 
-    // Map sector names to their IDs
-    const sectorMap = {};
-    sectors.forEach(sector => {
-      sectorMap[sector.name] = sector.id;
-    });
-
-    // Map industry names to their IDs
-    const industryMap = {};
-    industries.forEach(industry => {
-      industryMap[industry.name] = industry.id;
+    // Map detailed sector codes to their IDs
+    const detailedSectorMap = {};
+    detailedSectors.forEach(detailedSector => {
+      detailedSectorMap[detailedSector.code] = detailedSector.id;
     });
 
     // Map currency codes to their IDs
@@ -73,8 +61,7 @@ module.exports = {
         company_name: 'Reliance Industries Ltd.',
         description: 'Indian multinational conglomerate engaged in petrochemicals, oil & gas, telecom, and retail.',
         exchange_id: exchangeMap['NSE'],
-        sector_id: sectorMap['Energy'],
-        industry_id: industryMap['Petrochemicals'],
+        detailed_sector_id: detailedSectorMap['ENERGY_OIL_GAS_PETROCHEMICALS'],
         currency_id: currencyMap['INR'],
         market_cap: 1500000000000,
         pe_ratio: 12.5,
@@ -90,8 +77,7 @@ module.exports = {
         company_name: 'Tata Consultancy Services Ltd.',
         description: 'Indian multinational IT services and consulting company.',
         exchange_id: exchangeMap['NSE'],
-        sector_id: sectorMap['IT Industry'],
-        industry_id: industryMap['IT - Software '],
+        detailed_sector_id: detailedSectorMap['IT_SOFTWARE_SERVICES'],
         currency_id: currencyMap['INR'],
         market_cap: 1200000000000,
         pe_ratio: 28.5,
@@ -107,8 +93,7 @@ module.exports = {
         company_name: 'HDFC Bank Ltd.',
         description: 'Indian private sector bank offering banking and financial services.',
         exchange_id: exchangeMap['NSE'],
-        sector_id: sectorMap['Banking'],
-        industry_id: industryMap['Bank - Private'],
+        detailed_sector_id: detailedSectorMap['FINANCIALS_BANKS_PRIVATE'],
         currency_id: currencyMap['INR'],
         market_cap: 800000000000,
         pe_ratio: 18.2,
@@ -124,8 +109,7 @@ module.exports = {
         company_name: 'Infosys Ltd.',
         description: 'Indian multinational IT corporation providing business consulting, information technology and outsourcing services.',
         exchange_id: exchangeMap['NSE'],
-        sector_id: sectorMap['IT Industry'],
-        industry_id: industryMap['IT - Software '],
+        detailed_sector_id: detailedSectorMap['IT_SOFTWARE_SERVICES'],
         currency_id: currencyMap['INR'],
         market_cap: 700000000000,
         pe_ratio: 24.8,
@@ -141,8 +125,7 @@ module.exports = {
         company_name: 'Hindustan Unilever Ltd.',
         description: 'Indian consumer goods company manufacturing personal care products, foods, and beverages.',
         exchange_id: exchangeMap['NSE'],
-        sector_id: sectorMap['FMCG'],
-        industry_id: industryMap['Household & Personal Products'],
+        detailed_sector_id: detailedSectorMap['CONSUMER_STAPLES_HOUSEHOLD_PERSONAL'],
         currency_id: currencyMap['INR'],
         market_cap: 500000000000,
         pe_ratio: 55.2,
@@ -158,8 +141,7 @@ module.exports = {
         company_name: 'ICICI Bank Ltd.',
         description: 'Indian multinational bank and financial services company.',
         exchange_id: exchangeMap['NSE'],
-        sector_id: sectorMap['Banking'],
-        industry_id: industryMap['Bank - Private'],
+        detailed_sector_id: detailedSectorMap['FINANCIALS_BANKS_PRIVATE'],
         currency_id: currencyMap['INR'],
         market_cap: 450000000000,
         pe_ratio: 15.8,
@@ -175,8 +157,7 @@ module.exports = {
         company_name: 'Bharti Airtel Ltd.',
         description: 'Indian multinational telecommunications services company.',
         exchange_id: exchangeMap['NSE'],
-        sector_id: sectorMap['Tele-Communication'],
-        industry_id: industryMap['Telecommunication - Service  Provider'],
+        detailed_sector_id: detailedSectorMap['TELECOM_SERVICE_PROVIDER'],
         currency_id: currencyMap['INR'],
         market_cap: 400000000000,
         pe_ratio: 32.5,
@@ -192,8 +173,7 @@ module.exports = {
         company_name: 'Kotak Mahindra Bank Ltd.',
         description: 'Indian private sector bank offering commercial banking products and services.',
         exchange_id: exchangeMap['NSE'],
-        sector_id: sectorMap['Banking'],
-        industry_id: industryMap['Bank - Private'],
+        detailed_sector_id: detailedSectorMap['FINANCIALS_BANKS_PRIVATE'],
         currency_id: currencyMap['INR'],
         market_cap: 320000000000,
         pe_ratio: 20.5,
@@ -209,8 +189,7 @@ module.exports = {
         company_name: 'Larsen & Toubro Ltd.',
         description: 'Indian multinational conglomerate engaged in engineering, construction, and technology.',
         exchange_id: exchangeMap['NSE'],
-        sector_id: sectorMap['Industries'],
-        industry_id: industryMap['Engineering - Construction'],
+        detailed_sector_id: detailedSectorMap['INDUSTRIALS_ENGINEERING_CONSTRUCTION'],
         currency_id: currencyMap['INR'],
         market_cap: 280000000000,
         pe_ratio: 26.8,
@@ -226,8 +205,7 @@ module.exports = {
         company_name: 'HCL Technologies Ltd.',
         description: 'Indian multinational IT services company.',
         exchange_id: exchangeMap['NSE'],
-        sector_id: sectorMap['IT Industry'],
-        industry_id: industryMap['IT - Software '],
+        detailed_sector_id: detailedSectorMap['IT_SOFTWARE_SERVICES'],
         currency_id: currencyMap['INR'],
         market_cap: 270000000000,
         pe_ratio: 18.5,
@@ -243,8 +221,7 @@ module.exports = {
         company_name: 'Maruti Suzuki India Ltd.',
         description: 'Indian automobile manufacturer, largest passenger car company in India.',
         exchange_id: exchangeMap['NSE'],
-        sector_id: sectorMap['Automobile & Ancillaries'],
-        industry_id: industryMap['Automobiles - Passenger Cars'],
+        detailed_sector_id: detailedSectorMap['AUTO_PASSENGER_CARS'],
         currency_id: currencyMap['INR'],
         market_cap: 250000000000,
         pe_ratio: 28.2,
@@ -260,8 +237,7 @@ module.exports = {
         company_name: 'State Bank of India',
         description: 'Indian multinational public sector banking and financial services company.',
         exchange_id: exchangeMap['NSE'],
-        sector_id: sectorMap['Banking'],
-        industry_id: industryMap['Bank - Public'],
+        detailed_sector_id: detailedSectorMap['FINANCIALS_BANKS_PUBLIC'],
         currency_id: currencyMap['INR'],
         market_cap: 240000000000,
         pe_ratio: 9.5,
