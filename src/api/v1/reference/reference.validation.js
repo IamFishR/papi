@@ -22,7 +22,7 @@ const getReferenceData = {
       'risk-tolerance-levels',
       'notification-statuses',
       'exchanges',
-      'sectors',
+      'detailed-sectors',
       'currencies',
       'news-sources',
       'priority-levels'
