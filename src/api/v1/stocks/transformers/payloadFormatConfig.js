@@ -120,8 +120,11 @@ const PAYLOAD_FORMATS = {
              payload.industryInfo;
     },
     transformer: (payload) => {
+      console.log('========== NSE_DIRECT_FORMAT TRANSFORMER ==========');
+      console.log('Input payload industryInfo:', payload.industryInfo);
+      
       // Transform NSE direct format to standard format
-      return {
+      const result = {
         stockInfo: {
           symbol: payload.info.symbol,
           company_name: payload.info.companyName,
@@ -238,6 +241,10 @@ const PAYLOAD_FORMATS = {
           basicIndustry: payload.industryInfo.basicIndustry
         } : null
       };
+      
+      console.log('Output result industryInfo:', result.industryInfo);
+      console.log('========== END NSE_DIRECT_FORMAT TRANSFORMER ==========');
+      return result;
     },
     endpoints: ['/complete-market-data']
   }
@@ -251,10 +258,12 @@ const PAYLOAD_FORMATS = {
  */
 const detectPayloadFormat = (payload, endpoint) => {
   for (const [formatKey, formatConfig] of Object.entries(PAYLOAD_FORMATS)) {
+    
     // Check if this format applies to the current endpoint
     if (!formatConfig.endpoints.includes(endpoint)) {
       continue;
     }
+    
     
     // Check if the payload matches this format
     if (formatConfig.detector(payload)) {
@@ -262,6 +271,8 @@ const detectPayloadFormat = (payload, endpoint) => {
         key: formatKey,
         ...formatConfig
       };
+    } else {
+      console.log(`- No match for ${formatKey}`);
     }
   }
   

@@ -423,7 +423,7 @@ const completeMarketData = {
       total_sell_quantity: Joi.number().integer().min(0).allow(null),
       ato_buy_qty: Joi.number().integer().min(0).allow(null),
       ato_sell_qty: Joi.number().integer().min(0).allow(null),
-      final_iep: Joi.number().positive().allow(null),
+      final_iep: Joi.number().allow(null),
       final_iep_qty: Joi.number().integer().min(0).allow(null),
       market_type: Joi.string().valid('REGULAR', 'EXTENDED', 'SPECIAL').default('REGULAR'),
       data_source: Joi.string().max(50).default('NSE')

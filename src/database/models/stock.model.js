@@ -49,24 +49,6 @@ module.exports = (sequelize) => {
         key: 'id',
       },
     },
-    sectorId: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      field: 'sector_id',
-      references: {
-        model: 'st_sectors',
-        key: 'id',
-      },
-    },
-    industryId: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      field: 'industry_id',
-      references: {
-        model: 'st_industries',
-        key: 'id',
-      },
-    },
     currencyId: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -130,12 +112,6 @@ module.exports = (sequelize) => {
         fields: ['exchange_id'],
       },
       {
-        fields: ['sector_id'],
-      },
-      {
-        fields: ['industry_id'],
-      },
-      {
         fields: ['is_active'],
       },
     ],
@@ -150,21 +126,6 @@ module.exports = (sequelize) => {
       });
     }
 
-    if (models.Sector) {
-      // Stock belongs to a sector
-      Stock.belongsTo(models.Sector, {
-        foreignKey: 'sectorId',
-        as: 'sector',
-      });
-    }
-
-    if (models.Industry) {
-      // Stock belongs to an industry
-      Stock.belongsTo(models.Industry, {
-        foreignKey: 'industryId',
-        as: 'industry',
-      });
-    }
 
     if (models.Currency) {
       // Stock belongs to a currency

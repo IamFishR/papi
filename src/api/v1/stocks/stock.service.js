@@ -35,12 +35,7 @@ const getStocks = async (filter, options) => {
     whereConditions.exchangeId = filter.exchange;
   }
 
-  // Apply sector filter (legacy)
-  if (filter.sector) {
-    whereConditions.sectorId = filter.sector;
-  }
-
-  // Apply detailed sector filter (new)
+  // Apply detailed sector filter
   if (filter.detailedSector) {
     whereConditions.detailedSectorId = filter.detailedSector;
   }
@@ -70,7 +65,6 @@ const getStocks = async (filter, options) => {
     where: whereConditions,
     include: [
       { model: db.Exchange, as: 'exchange' },
-      { model: db.Sector, as: 'sector' },
       { model: db.Currency, as: 'currency' },
       { model: db.DetailedSector, as: 'detailedSector' }
     ],
@@ -312,23 +306,6 @@ const validateExchangeExists = async (exchangeId) => {
   return !!exchange;
 };
 
-/**
- * Check if sector exists and is active
- * @param {number} sectorId - Sector ID to validate
- * @returns {Promise<boolean>} True if sector exists and is active
- */
-const validateSectorExists = async (sectorId) => {
-  if (!sectorId) return true; // null is allowed for optional fields
-
-  const sector = await db.Sector.findOne({
-    where: {
-      id: sectorId,
-      isActive: true
-    }
-  });
-
-  return !!sector;
-};
 
 /**
  * Check if currency exists and is active
@@ -351,16 +328,18 @@ const validateCurrencyExists = async (currencyId) => {
 /**
  * Check if detailed sector exists and is active
  * @param {number} sectorDetailedId - Detailed Sector ID to validate
+ * @param {Object} transaction - Database transaction
  * @returns {Promise<boolean>} True if detailed sector exists and is active
  */
-const validateDetailedSectorExists = async (sectorDetailedId) => {
+const validateDetailedSectorExists = async (sectorDetailedId, transaction = null) => {
   if (!sectorDetailedId) return true; // null is allowed for optional fields
 
   const detailedSector = await db.DetailedSector.findOne({
     where: {
       id: sectorDetailedId,
       isActive: true
-    }
+    },
+    transaction
   });
 
   return !!detailedSector;
@@ -371,21 +350,16 @@ const validateDetailedSectorExists = async (sectorDetailedId) => {
  * @param {Object} stockData - Stock data with foreign keys
  * @returns {Promise<void>} Throws error if any dependency is invalid
  */
-const validateStockDependencies = async (stockData) => {
-  const { exchangeId, sectorId, currencyId, sectorDetailedId } = stockData;
+const validateStockDependencies = async (stockData, transaction = null) => {
+  const { exchangeId, currencyId, detailedSectorId } = stockData;
 
   // Validate exchange (required)
   if (exchangeId && !(await validateExchangeExists(exchangeId))) {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid exchange ID. Exchange not found or inactive.');
   }
 
-  // Validate sector (optional)
-  if (sectorId && !(await validateSectorExists(sectorId))) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid sector ID. Sector not found or inactive.');
-  }
-
   // Validate detailed sector (optional)
-  if (sectorDetailedId && !(await validateDetailedSectorExists(sectorDetailedId))) {
+  if (detailedSectorId && !(await validateDetailedSectorExists(detailedSectorId, transaction))) {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid detailed sector ID. Detailed sector not found or inactive.');
   }
 
@@ -431,7 +405,6 @@ const createStock = async (stockData) => {
   return await db.Stock.findByPk(stock.id, {
     include: [
       { model: db.Exchange, as: 'exchange' },
-      { model: db.Sector, as: 'sector' },
       { model: db.Currency, as: 'currency' },
       { model: db.DetailedSector, as: 'detailedSector' }
     ]
@@ -490,7 +463,6 @@ const updateStock = async (id, updateData) => {
   return await db.Stock.findByPk(id, {
     include: [
       { model: db.Exchange, as: 'exchange' },
-      { model: db.Sector, as: 'sector' },
       { model: db.Currency, as: 'currency' },
       { model: db.DetailedSector, as: 'detailedSector' }
     ]
@@ -529,7 +501,6 @@ const getStockByISIN = async (isin) => {
     },
     include: [
       { model: db.Exchange, as: 'exchange' },
-      { model: db.Sector, as: 'sector' },
       { model: db.Currency, as: 'currency' },
       { model: db.DetailedSector, as: 'detailedSector' }
     ]
@@ -958,11 +929,6 @@ const processCompleteMarketData = async (data) => {
         result.additionalData.detailedSectorCreated = detailedSector.isNewRecord !== false;
       }
     }
-    
-    // Validate sector_detailed_id if provided
-    if (detailedSectorId && !(await validateDetailedSectorExists(detailedSectorId))) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, `Detailed sector with ID ${detailedSectorId} does not exist or is inactive`);
-    }
 
     // Transform field names from snake_case to camelCase for existing validation
     const stockDataForValidation = {
@@ -970,7 +936,7 @@ const processCompleteMarketData = async (data) => {
       companyName: stockInfo.company_name,
       description: stockInfo.description,
       exchangeId: validExchangeId,
-      sectorDetailedId: detailedSectorId,
+      detailedSectorId: detailedSectorId,
       currencyId: validCurrencyId,
       isin: stockInfo.isin,
       faceValue: stockInfo.face_value,
@@ -1002,7 +968,7 @@ const processCompleteMarketData = async (data) => {
     };
 
     // Validate all dependencies before creating/updating
-    await validateStockDependencies(stockDataForValidation);
+    await validateStockDependencies(stockDataForValidation, transaction);
 
     // Check if stock exists by symbol
     let existingStock = await db.Stock.findOne({
@@ -1043,7 +1009,6 @@ const processCompleteMarketData = async (data) => {
       result.stock = await db.Stock.findByPk(existingStock.id, {
         include: [
           { model: db.Exchange, as: 'exchange' },
-          { model: db.Sector, as: 'sector' },
           { model: db.Currency, as: 'currency' },
           { model: db.DetailedSector, as: 'detailedSector' }
         ],
@@ -1077,7 +1042,6 @@ const processCompleteMarketData = async (data) => {
       result.stock = await db.Stock.findByPk(createdStock.id, {
         include: [
           { model: db.Exchange, as: 'exchange' },
-          { model: db.Sector, as: 'sector' },
           { model: db.Currency, as: 'currency' },
           { model: db.DetailedSector, as: 'detailedSector' }
         ],

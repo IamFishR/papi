@@ -26,7 +26,7 @@ const getReferenceData = async (type) => {
     'risk-tolerance-levels': { model: db.RiskToleranceLevel, table: 'st_risk_tolerance_levels' },
     'notification-statuses': { model: db.NotificationStatus, table: 'st_notification_statuses' },
     'exchanges': { model: db.Exchange, table: 'st_exchanges' },
-    'sectors': { model: db.Sector, table: 'st_sectors' },
+    'detailed-sectors': { model: db.DetailedSector, table: 'st_detailed_sectors' },
     'currencies': { model: db.Currency, table: 'st_currencies' },
     'news-sources': { model: db.NewsSource, table: 'st_news_sources' },
     'priority-levels': { model: db.PriorityLevel, table: 'st_priority_levels' }
@@ -68,7 +68,7 @@ const getAllReferenceData = async () => {
     'risk-tolerance-levels',
     'notification-statuses',
     'exchanges',
-    'sectors',
+    'detailed-sectors',
     'currencies',
     'news-sources',
     'priority-levels'

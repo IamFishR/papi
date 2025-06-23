@@ -15,13 +15,11 @@ const payloadTransformer = (transformerFn) => {
     try {
       // Only transform if there's a body
       if (!req.body || Object.keys(req.body).length === 0) {
-        console.log('No body to transform, skipping...');
         return next();
       }
 
       // Apply the transformation
       const transformedPayload = transformerFn(req.body);
-
       // Replace the original body with transformed payload
       req.body = transformedPayload;
       

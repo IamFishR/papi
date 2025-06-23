@@ -12,7 +12,8 @@ const transformNSEMarketData = (payload) => {
   // Handle NSE format: { symbol, company, timestamp, source, data: { info, metadata, priceInfo, preOpenMarket, etc. } }
   if (payload.data && payload.data.info && payload.data.priceInfo) {
     const { data } = payload;
-    
+    console.log('----------------- Transforming NSE Market Data -----------------');
+    console.log('Payload:', JSON.stringify(payload, null, 2));
     return {
       stockInfo: {
         symbol: data.info.symbol || payload.symbol,
@@ -95,8 +96,8 @@ const transformNSEMarketData = (payload) => {
         total_sell_quantity: data.preOpenMarket.totalSellQuantity,
         ato_buy_qty: data.preOpenMarket.atoBuyQty,
         ato_sell_qty: data.preOpenMarket.atoSellQty,
-        final_iep: data.preOpenMarket.finalPrice,
-        final_iep_qty: data.preOpenMarket.finalQuantity,
+        final_iep: data.preOpenMarket.finalPrice || null,
+        final_iep_qty: data.preOpenMarket.finalQuantity || null,
         market_type: 'REGULAR',
         data_source: payload.source || 'NSE'
       } : null,

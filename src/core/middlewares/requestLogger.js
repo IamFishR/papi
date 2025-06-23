@@ -23,7 +23,7 @@ morgan.token('body', (req) => {
 
 // Custom format based on environment
 const format = config.env === 'development' 
-  ? ':method :url :status :response-time ms - :res[content-length] :body' 
+  ? ':method :url :status :response-time ms - :res[content-length]' 
   : ':remote-addr - :method :url :status :response-time ms - :res[content-length]';
 
 // Create Morgan middleware using Winston for logging

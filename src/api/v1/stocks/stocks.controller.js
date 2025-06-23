@@ -209,16 +209,9 @@ const bulkUpdatePrices = catchAsync(async (req, res) => {
  * @admin
  */
 const completeMarketData = catchAsync(async (req, res) => {
-  const { stockInfo, priceInfo, preMarketData, preMarketOrders, valuationMetrics, indexMemberships } = req.body;
+  // const { stockInfo, priceInfo, preMarketData, preMarketOrders, valuationMetrics, indexMemberships, industryInfo } = req.body;
 
-  const result = await stockService.processCompleteMarketData({
-    stockInfo,
-    priceInfo,
-    preMarketData,
-    preMarketOrders,
-    valuationMetrics,
-    indexMemberships
-  });
+  const result = await stockService.processCompleteMarketData(req.body);
 
   return apiResponse.success(
     res,
