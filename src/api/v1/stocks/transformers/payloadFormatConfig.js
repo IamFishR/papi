@@ -8,6 +8,8 @@ const {
   autoTransformCompleteMarketData 
 } = require('./stockPayloadTransformers');
 
+const { transformNSELivePrice } = require('./nseLivePriceTransformer');
+
 /**
  * Convert NSE date format to ISO format
  * @param {string} nseDate - Date in NSE format (DD-MMM-YYYY) or other formats
@@ -108,6 +110,19 @@ const PAYLOAD_FORMATS = {
     },
     transformer: (payload) => payload, // No transformation needed
     endpoints: ['/complete-market-data']
+  },
+  
+  NSE_LIVE_PRICE_FORMAT: {
+    name: 'NSE Live Price Format',
+    description: 'NSE live price data with array of stocks',
+    detector: (payload) => {
+      return payload.data && 
+             Array.isArray(payload.data) && 
+             payload.timestamp &&
+             (payload.advance || payload.metadata);
+    },
+    transformer: transformNSELivePrice,
+    endpoints: ['/bulk/prices/live']
   },
   
   NSE_DIRECT_FORMAT: {
@@ -327,5 +342,6 @@ module.exports = {
   getAvailableFormats,
   createTransformerForEndpoint,
   // Export specific transformers for direct use
-  autoTransformCompleteMarketData
+  autoTransformCompleteMarketData,
+  transformNSELivePrice
 };

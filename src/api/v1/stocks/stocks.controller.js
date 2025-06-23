@@ -7,6 +7,8 @@ const apiResponse = require('../../../core/utils/apiResponse');
 const successMessages = require('../../../constants/successMessages');
 const stockService = require('./stock.service');
 const { catchAsync } = require('../../../core/utils/catchAsync');
+const { transformNSELivePrice } = require('./transformers/nseLivePriceTransformer');
+const bulkLivePriceService = require('./services/bulkLivePriceUpdate.service');
 
 /**
  * Get all stocks with filtering support
@@ -221,6 +223,43 @@ const completeMarketData = catchAsync(async (req, res) => {
   );
 });
 
+/**
+ * Bulk update stock live prices from NSE live feed
+ * @route POST /api/v1/stocks/bulk/prices/live
+ * @admin
+ */
+const bulkUpdateLivePrices = catchAsync(async (req, res) => {
+  const transformedData = transformNSELivePrice(req.body);
+  
+  const result = await bulkLivePriceService(
+    transformedData.priceData, 
+    transformedData.priceDate,
+    transformedData.marketData
+  );
+
+  return apiResponse.success(
+    res,
+    StatusCodes.OK,
+    'Live price update completed successfully',
+    {
+      summary: {
+        totalSubmitted: result.totalSubmitted,
+        processed: result.processed,
+        created: result.created,
+        updated: result.updated,
+        skipped: result.skipped.length,
+        errors: result.errors.length
+      },
+      details: {
+        skipped: result.skipped,
+        errors: result.errors
+      },
+      priceDate: result.priceDate,
+      marketDataProcessed: result.marketDataProcessed
+    }
+  );
+});
+
 module.exports = {
   getStocks,
   getStockById,
@@ -232,5 +271,6 @@ module.exports = {
   updateStock,
   deleteStock,
   bulkUpdatePrices,
-  completeMarketData
+  completeMarketData,
+  bulkUpdateLivePrices
 };

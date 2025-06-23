@@ -472,13 +472,50 @@ const completeMarketData = {
   })
 };
 
+/**
+ * Schema for bulk live updating prices (specific for live market data updates)
+ */
+const bulkUpdateLivePrices = {
+  body: Joi.object().keys({
+    data: Joi.array().items(
+      Joi.object().keys({
+        symbol: Joi.string().required(),
+        identifier: Joi.string().allow(null),
+        open: Joi.number().positive().allow(null),
+        dayHigh: Joi.number().positive().allow(null),
+        dayLow: Joi.number().positive().allow(null),
+        lastPrice: Joi.number().positive().allow(null),
+        previousClose: Joi.number().positive().allow(null),
+        change: Joi.number().allow(null),
+        pChange: Joi.number().allow(null),
+        totalTradedVolume: Joi.number().integer().min(0).allow(null),
+        totalTradedValue: Joi.number().positive().allow(null),
+        lastUpdateTime: Joi.string().allow(null),
+        yearHigh: Joi.number().positive().allow(null),
+        yearLow: Joi.number().positive().allow(null),
+        nearWKH: Joi.number().allow(null),
+        nearWKL: Joi.number().allow(null),
+        perChange365d: Joi.number().allow(null),
+        perChange30d: Joi.number().allow(null),
+        series: Joi.string().allow(null),
+        meta: Joi.object().allow(null)
+      })
+    ).min(1).required(),
+    name: Joi.string().allow(null),
+    timestamp: Joi.string().required(),
+    advance: Joi.object().keys({
+      declines: Joi.string().allow(null),
+      advances: Joi.string().allow(null),
+      unchanged: Joi.string().allow(null)
+    }).allow(null),
+    metadata: Joi.object().allow(null),
+    marketStatus: Joi.object().allow(null)
+  }).required()
+};
+
 module.exports = {
   listStocks,
   getStockById,
-  getStockByISIN,
-  getStocksByDetailedSector,
-  getFNOEnabledStocks,
-  getStocksBySurveillanceStage,
   getStockPrices,
   addStockPrices,
   getStockNews,
@@ -488,5 +525,6 @@ module.exports = {
   updateStockIndianFields,
   deleteStock,
   bulkUpdatePrices,
+  bulkUpdateLivePrices,
   completeMarketData,
 };

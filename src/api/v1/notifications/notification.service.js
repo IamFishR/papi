@@ -14,7 +14,8 @@ const db = require('../../../database/models');
  * @param {string} userId - User ID
  * @returns {Promise<Object>} Paginated notifications with metadata
  */
-const getNotifications = async (filter, options, userId) => {
+const getNotifications = async (filter, options) => {
+  const userId = filter.userId;
   const { limit, page, sortBy, sortOrder } = options;
   const offset = (page - 1) * limit;
 
@@ -26,11 +27,11 @@ const getNotifications = async (filter, options, userId) => {
   // Apply status filter if provided
   if (filter.status) {
     const notificationStatus = await db.NotificationStatus.findOne({
-      where: { name: filter.status }
+      where: { id: filter.status }
     });
     
     if (notificationStatus) {
-      whereConditions.status = notificationStatus.name;
+      whereConditions.notificationStatusId = notificationStatus.id;
     } else {
       throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid notification status');
     }
@@ -39,7 +40,7 @@ const getNotifications = async (filter, options, userId) => {
   // Apply method filter if provided
   if (filter.method) {
     const notificationMethod = await db.NotificationMethod.findOne({
-      where: { name: filter.method }
+      where: { id: filter.method }
     });
     
     if (notificationMethod) {
@@ -54,21 +55,24 @@ const getNotifications = async (filter, options, userId) => {
     where: whereConditions,
     limit,
     offset,
-    order: [[sortBy || 'scheduledAt', sortOrder || 'DESC']],
+    order: [[sortBy || 'scheduledTime', sortOrder || 'DESC']],
     include: [
       { model: db.NotificationMethod, as: 'notificationMethod' },
-      { model: db.PriorityLevel, as: 'priorityLevel' },
+      { model: db.NotificationStatus, as: 'notificationStatus' },
+      { model: db.PriorityLevel, as: 'priority' },
       { model: db.Alert, as: 'alert', include: [{ model: db.Stock, as: 'stock' }] }
     ]
   });
 
   // Return paginated result
   return {
-    results: rows,
-    totalCount: count,
-    totalPages: Math.ceil(count / limit),
-    currentPage: page,
-    limit
+    notifications: rows,
+    pagination: {
+      totalCount: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+      limit
+    }
   };
 };
 
@@ -101,7 +105,7 @@ const acknowledgeNotification = async (id, userId) => {
   return db.NotificationQueue.findByPk(id, {
     include: [
       { model: db.NotificationMethod, as: 'notificationMethod' },
-      { model: db.PriorityLevel, as: 'priorityLevel' },
+      { model: db.PriorityLevel, as: 'priority' },
       { model: db.Alert, as: 'alert', include: [{ model: db.Stock, as: 'stock' }] }
     ]
   });
@@ -130,7 +134,7 @@ const processNotificationQueue = async () => {
       { model: db.Alert, as: 'alert', include: [{ model: db.Stock, as: 'stock' }] }
     ],
     order: [
-      [db.sequelize.col('priorityLevel.level'), 'ASC'],
+      [db.sequelize.col('priority.level'), 'ASC'],
       ['scheduledAt', 'ASC']
     ],
     limit: 100 // Process in batches

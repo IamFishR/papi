@@ -109,6 +109,11 @@ const getAlertById = async (id, userId) => {
  * @returns {Promise<Object>} Created alert
  */
 const createAlert = async (alertData, userId) => {
+  // Validate userId is provided
+  if (!userId) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'User ID is required for alert creation');
+  }
+
   // Verify stock exists if stockId is provided
   if (alertData.stockId) {
     const stock = await db.Stock.findByPk(alertData.stockId);
@@ -663,7 +668,7 @@ const queueAlertNotification = async (alert) => {
         alertId: alert.id,
         content: notificationContent,
         notificationMethodId: await getNotificationMethodId('email'),
-        priorityLevelId: await getPriorityLevelId('Medium'),
+        priorityId: await getPriorityLevelId('Medium'),
         status: 'pending',
         attempts: 0,
         maxAttempts: 3,
@@ -680,7 +685,7 @@ const queueAlertNotification = async (alert) => {
         alertId: alert.id,
         content: notificationContent,
         notificationMethodId: await getNotificationMethodId('sms'),
-        priorityLevelId: await getPriorityLevelId('High'),
+        priorityId: await getPriorityLevelId('High'),
         status: 'pending',
         attempts: 0,
         maxAttempts: 3,
@@ -689,22 +694,21 @@ const queueAlertNotification = async (alert) => {
     );
   }
   
-  // Push notification
-  if (userPreferences.pushNotificationsEnabled) {
-    notificationPromises.push(
-      db.NotificationQueue.create({
-        userId: alert.userId,
-        alertId: alert.id,
-        content: notificationContent,
-        notificationMethodId: await getNotificationMethodId('push'),
-        priorityLevelId: await getPriorityLevelId('High'),
-        status: 'pending',
-        attempts: 0,
-        maxAttempts: 3,
-        scheduledAt: new Date()
-      })
-    );
-  }
+  // Push notification to frontend - always send this
+  notificationPromises.push(
+    db.NotificationQueue.create({
+      userId: alert.userId,
+      alertId: alert.id,
+      content: notificationContent,
+      notificationMethodId: await getNotificationMethodId('push'),
+      priorityId: await getPriorityLevelId('High'),
+      status: 'pending',
+      attempts: 0,
+      maxAttempts: 3,
+      scheduledAt: new Date(),
+      recipientAddress: 'frontend'
+    })
+  );
 
   // Wait for all notifications to be queued
   const notifications = await Promise.all(notificationPromises);
@@ -746,6 +750,40 @@ const getPriorityLevelId = async (levelName) => {
   return level.id;
 };
 
+/**
+ * Process all active alerts - called by scheduler
+ * @returns {Promise<void>}
+ */
+const processAllAlerts = async () => {
+  try {
+    // Get all active price alerts
+    const alerts = await db.Alert.findAll({
+      where: {
+        isActive: true,
+        triggerTypeId: 1 // Price alerts
+      },
+      include: [{
+        model: db.Stock,
+        attributes: ['id', 'symbol', 'name']
+      }]
+    });
+
+    logger.info(`Processing ${alerts.length} active alerts`);
+
+    // Process each alert
+    for (const alert of alerts) {
+      try {
+        await checkPriceAlertConditions(alert);
+      } catch (error) {
+        logger.error(`Error processing alert ${alert.id}:`, error);
+      }
+    }
+  } catch (error) {
+    logger.error('Error processing all alerts:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   getAlerts,
   getAlertById,
@@ -753,5 +791,9 @@ module.exports = {
   updateAlert,
   deleteAlert,
   getAlertHistory,
-  processAlerts
+  processAlerts,
+  processAllAlerts,
+  queueAlertNotification,
+  getNotificationMethodId,
+  getPriorityLevelId
 };

@@ -1,0 +1,97 @@
+/**
+ * NSE Live Price Transformer
+ * Transforms NSE Live Price data into StockPrice records for bulk updates
+ */
+
+/**
+ * Parse NSE date string into ISO format date
+ * @param {string} nseDate - Date in NSE format (e.g., "23-Jun-2025 11:10:43")
+ * @returns {string} ISO date string
+ */
+const parseNSEDate = (nseDate) => {
+  if (!nseDate) return null;
+  
+  try {
+    // Handle DD-MMM-YYYY HH:MM:SS format (like "23-Jun-2025 11:10:43")
+    if (nseDate.match(/^\d{1,2}-[A-Za-z]{3}-\d{4} \d{1,2}:\d{2}:\d{2}$/)) {
+      const [datePart, timePart] = nseDate.split(' ');
+      const [day, month, year] = datePart.split('-');
+      const monthMap = {
+        'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
+        'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
+        'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+      };
+      const isoDateTime = `${year}-${monthMap[month]}-${day.padStart(2, '0')}T${timePart}`;
+      return new Date(isoDateTime).toISOString();
+    }
+    
+    // Try parsing as is and convert to ISO
+    return new Date(nseDate).toISOString();
+  } catch (error) {
+    console.warn(`Failed to convert NSE date "${nseDate}" to ISO format:`, error.message);
+    return null;
+  }
+};
+
+/**
+ * Transform NSE live price payload to stock price update records
+ * @param {Object} payload - NSE live price payload
+ * @returns {Object} Transformed data for bulk price update
+ */
+const transformNSELivePrice = (payload) => {
+  if (!payload || !payload.data || !Array.isArray(payload.data)) {
+    throw new Error('Invalid NSE live price payload format');
+  }
+  
+  const timestamp = payload.timestamp ? parseNSEDate(payload.timestamp) : new Date().toISOString();
+  const priceDate = timestamp.split('T')[0]; // Extract the date portion
+  
+  // Process each stock in the data array
+  const priceData = payload.data.map(stock => {
+    // Skip non-stock entries (like indices) if they don't have a series
+    if (!stock.series && stock.symbol === 'NIFTY 50') {
+      return null;
+    }
+    
+    return {
+      symbol: stock.symbol,
+      identifier: stock.identifier || null,
+      open: stock.open || null,
+      dayHigh: stock.dayHigh || null,
+      dayLow: stock.dayLow || null,
+      lastPrice: stock.lastPrice || null,
+      previousClose: stock.previousClose || null,
+      change: stock.change || null,
+      pChange: stock.pChange || null,
+      totalTradedVolume: stock.totalTradedVolume || null,
+      totalTradedValue: stock.totalTradedValue || null,
+      lastUpdateTime: stock.lastUpdateTime ? parseNSEDate(stock.lastUpdateTime) : null,
+      yearHigh: stock.yearHigh || null,
+      yearLow: stock.yearLow || null,
+      nearWKH: stock.nearWKH || null,
+      nearWKL: stock.nearWKL || null,
+      perChange365d: stock.perChange365d || null,
+      perChange30d: stock.perChange30d || null,
+      series: stock.series || null,
+      meta: stock.meta || null
+    };
+  }).filter(Boolean); // Remove null entries
+  
+  return {
+    priceData,
+    priceDate,
+    marketData: {
+      name: payload.name,
+      advances: payload.advance?.advances || "0",
+      declines: payload.advance?.declines || "0",
+      unchanged: payload.advance?.unchanged || "0",
+      timestamp: payload.timestamp,
+      metadata: payload.metadata || null,
+      marketStatus: payload.marketStatus || null
+    }
+  };
+};
+
+module.exports = {
+  transformNSELivePrice
+};

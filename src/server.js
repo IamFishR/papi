@@ -6,6 +6,7 @@ const app = require('./app');
 const config = require('./config/config');
 const logger = require('./config/logger');
 const db = require('./database/models');
+const alertScheduler = require('./jobs/alertScheduler');
 
 // Normalize port
 const normalizePort = (val) => {
@@ -72,6 +73,9 @@ const startServer = async () => {
     server.listen(port);
     server.on('error', onError);
     server.on('listening', onListening);
+    
+    // Start alert scheduler
+    alertScheduler.start();
   } catch (error) {
     logger.error('Unable to connect to the database:', error);
     process.exit(1);
@@ -86,7 +90,21 @@ process.on('unhandledRejection', (reason, promise) => {
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
   logger.error('Uncaught Exception:', error);
+  alertScheduler.stop();
   process.exit(1);
+});
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM received, shutting down gracefully');
+  alertScheduler.stop();
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  logger.info('SIGINT received, shutting down gracefully');
+  alertScheduler.stop();
+  process.exit(0);
 });
 
 // Start the server

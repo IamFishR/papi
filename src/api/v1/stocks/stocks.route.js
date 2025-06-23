@@ -30,6 +30,16 @@ router.post(
   catchAsync(stocksController.bulkUpdatePrices)
 );
 
+// Bulk update live prices from NSE real-time feed (admin only)
+router.post(
+  '/bulk/prices/live',
+  authenticate,
+  authorize('admin'),
+  payloadTransformer(createTransformerForEndpoint('/bulk/prices/live')),
+  validate(stocksValidation.bulkUpdateLivePrices.body),
+  catchAsync(stocksController.bulkUpdateLivePrices)
+);
+
 // Complete market data endpoint - handles stock info, prices, pre-market data, valuation, and index memberships
 router.post(
   '/complete-market-data',
