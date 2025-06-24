@@ -386,16 +386,17 @@ const checkPriceAlertConditions = async (alert) => {
     return false;
   }
 
-  // Get latest stock price (only data after alert creation)
-  const latestPrice = await db.StockPrice.findOne({
+  // Get latest stock price from live ticker data (only data after alert creation)
+  const latestPrice = await db.TradingTicker.findOne({
     where: { 
       stockId: alert.stockId,
+      isTradable: true,
       // Only check prices after the alert baseline timestamp
       ...(alert.baselineTimestamp && {
-        created_at: { [Op.gte]: alert.baselineTimestamp }
+        last_update_time: { [Op.gte]: alert.baselineTimestamp }
       })
     },
-    order: [['created_at', 'DESC']]
+    order: [['last_update_time', 'DESC']]
   });
   
   if (!latestPrice) {
@@ -410,7 +411,7 @@ const checkPriceAlertConditions = async (alert) => {
     }
   }
 
-  const currentPrice = latestPrice.price;
+  const currentPrice = latestPrice.ltp;
   const threshold = alert.priceThreshold;
   const baselinePrice = alert.baselinePrice;
   
@@ -482,10 +483,10 @@ const getAverageVolume = async (stockId, days = 30) => {
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
   
-  const historicalPrices = await db.StockPrice.findAll({
+  const historicalPrices = await db.TradingTicker.findAll({
     where: {
       stockId,
-      created_at: { [Op.gte]: startDate }
+      last_update_time: { [Op.gte]: startDate }
     },
     attributes: ['volume']
   });
@@ -663,24 +664,25 @@ const createAlertHistory = async (alert) => {
   
   switch (alert.triggerType.name) {
     case 'stock_price':
-      stockPrice = await db.StockPrice.findOne({
+      stockPrice = await db.TradingTicker.findOne({
         where: { 
           stockId: alert.stockId,
+          isTradable: true,
           // Only get prices after baseline for forward-looking context
           ...(alert.baselineTimestamp && {
-            created_at: { [Op.gte]: alert.baselineTimestamp }
+            last_update_time: { [Op.gte]: alert.baselineTimestamp }
           })
         },
-        order: [['created_at', 'DESC']]
+        order: [['last_update_time', 'DESC']]
       });
-      triggerValue = stockPrice ? stockPrice.price : null;
+      triggerValue = stockPrice ? stockPrice.ltp : null;
       triggerVolume = stockPrice ? stockPrice.volume : null;
       break;
     
     case 'volume':
-      stockPrice = await db.StockPrice.findOne({
-        where: { stockId: alert.stockId },
-        order: [['created_at', 'DESC']]
+      stockPrice = await db.TradingTicker.findOne({
+        where: { stockId: alert.stockId, isTradable: true },
+        order: [['last_update_time', 'DESC']]
       });
       triggerValue = stockPrice ? stockPrice.volume : null;
       triggerVolume = stockPrice ? stockPrice.volume : null;
@@ -754,12 +756,12 @@ const queueAlertNotification = async (alert) => {
   
   switch (alert.triggerType.name) {
     case 'stock_price':
-      const stockPrice = await db.StockPrice.findOne({
-        where: { stockId: alert.stockId },
-        order: [['created_at', 'DESC']]
+      const stockPrice = await db.TradingTicker.findOne({
+        where: { stockId: alert.stockId, isTradable: true },
+        order: [['last_update_time', 'DESC']]
       });
       
-      notificationContent = `${stock.symbol} price alert: Current price $${stockPrice.price} is ${alert.thresholdCondition.name} your threshold of $${alert.priceThreshold}`; // Changed from thresholdValue to priceThreshold
+      notificationContent = `${stock.symbol} price alert: Current price $${stockPrice.ltp} is ${alert.thresholdCondition.name} your threshold of $${alert.priceThreshold}`;
       break;
     
     case 'volume':

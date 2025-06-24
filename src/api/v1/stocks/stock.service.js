@@ -92,13 +92,39 @@ const getStocks = async (filter, options) => {
  * @returns {Promise<Object>} Stock with related data
  */
 const getStockById = async (id) => {
-  const stock = await db.Stock.findByPk(id);
+  const stock = await db.Stock.findByPk(id, {
+    include: [
+      { model: db.Exchange, as: 'exchange' },
+      { model: db.Currency, as: 'currency' },
+      { model: db.DetailedSector, as: 'detailedSector' }
+    ]
+  });
 
   if (!stock) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Stock not found');
   }
 
-  return stock;
+  // Calculate date for one month ago
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+  // Get ticker prices for past month
+  const tickerPrices = await db.TradingTicker.findAll({
+    where: {
+      stockId: id,
+      lastUpdateTime: {
+        [Op.gte]: oneMonthAgo
+      }
+    },
+    order: [['lastUpdateTime', 'DESC']],
+    limit: 1000 // Reasonable limit to prevent excessive data
+  });
+
+  // Attach ticker prices to stock response
+  const stockWithTicker = stock.toJSON();
+  stockWithTicker.tickerPrices = tickerPrices;
+
+  return stockWithTicker;
 };
 
 /**

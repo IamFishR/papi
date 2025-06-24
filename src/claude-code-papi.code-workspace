@@ -10,5 +10,7 @@
 			"path": "../../bextension"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"remote.autoForwardPortsFallback": 0
+	}
 }
