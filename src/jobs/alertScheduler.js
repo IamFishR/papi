@@ -12,17 +12,29 @@ class AlertScheduler {
   }
 
   isMarketHours() {
+    // Get the timezone from env or default to Asia/Kolkata (IST)
+    const timezone = process.env.TIMEZONE || 'Asia/Kolkata';
+    
+    // Get current date in the specified timezone
     const now = new Date();
-    const day = now.getDay(); // 0 = Sunday, 6 = Saturday
-    const hour = now.getHours();
-    const minute = now.getMinutes();
+    
+    // Convert to IST by adding the offset (UTC+5:30)
+    // IST is 5 hours and 30 minutes ahead of UTC
+    const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+    
+    const day = istTime.getDay(); // 0 = Sunday, 6 = Saturday
+    const hour = istTime.getHours();
+    const minute = istTime.getMinutes();
+    
+    // Log the time for debugging
+    logger.debug(`Current IST time: ${istTime.toISOString()} (Day: ${day}, Time: ${hour}:${minute})`);
     
     // Skip weekends
     if (day === 0 || day === 6) {
       return false;
     }
     
-    // Market hours from env or default 9:15 AM to 3:30 PM IST
+    // Market hours from env or default 9:15 AM to 3:30 PM IST (Indian Standard Time)
     const marketStartHour = parseInt(process.env.MARKET_START_HOUR || '9');
     const marketStartMinute = parseInt(process.env.MARKET_START_MINUTE || '15');
     const marketEndHour = parseInt(process.env.MARKET_END_HOUR || '15');
@@ -49,12 +61,8 @@ class AlertScheduler {
         return;
       }
 
-      logger.info('Starting alert processing...');
-      
       // Process all active price alerts
       await alertService.processAllAlerts();
-      
-      logger.info('Alert processing completed');
     } catch (error) {
       logger.error('Error in alert processing:', error);
     } finally {

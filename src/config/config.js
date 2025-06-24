@@ -10,6 +10,7 @@ module.exports = {
   env: process.env.NODE_ENV || 'development',
   port: process.env.PORT || 8080,
   apiPrefix: process.env.API_PREFIX || '/api',
+  timezone: 'Asia/Kolkata',
   
   // Database configuration
   db: {

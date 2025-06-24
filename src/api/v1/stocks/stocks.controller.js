@@ -223,6 +223,20 @@ const completeMarketData = catchAsync(async (req, res) => {
   );
 });
 
+
+const bulkInsertTickerData = catchAsync(async (req, res) => {
+  const { tickerData } = req.body;
+
+  const result = await stockService.bulkInsertTickerData(tickerData);
+
+  return apiResponse.success(
+    res,
+    StatusCodes.CREATED,
+    'Bulk ticker data inserted successfully',
+    result
+  );
+});
+
 /**
  * Bulk update stock live prices from NSE live feed
  * @route POST /api/v1/stocks/bulk/prices/live
@@ -272,5 +286,6 @@ module.exports = {
   deleteStock,
   bulkUpdatePrices,
   completeMarketData,
-  bulkUpdateLivePrices
+  bulkUpdateLivePrices,
+  bulkInsertTickerData
 };

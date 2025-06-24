@@ -179,6 +179,28 @@ module.exports = (sequelize) => {
       allowNull: true,
       field: 'last_triggered',
     },
+    baselinePrice: {
+      type: DataTypes.DECIMAL(12, 4),
+      allowNull: true,
+      field: 'baseline_price',
+    },
+    baselineTimestamp: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'baseline_timestamp',
+    },
+    marketHoursOnly: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+      field: 'market_hours_only',
+    },
+    volumeConfirmation: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      field: 'volume_confirmation',
+    },
     isActive: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
@@ -207,6 +229,9 @@ module.exports = (sequelize) => {
       },
       {
         fields: ['last_triggered'],
+      },
+      {
+        fields: ['baseline_timestamp'],
       },
     ],
   });

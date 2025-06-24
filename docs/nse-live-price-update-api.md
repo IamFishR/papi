@@ -1,4 +1,4 @@
-# NSE Live Price Update API
+# NSE Live Price Update API - Daily once
 
 ## Overview
 

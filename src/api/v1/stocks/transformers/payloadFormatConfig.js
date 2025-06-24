@@ -9,6 +9,7 @@ const {
 } = require('./stockPayloadTransformers');
 
 const { transformNSELivePrice } = require('./nseLivePriceTransformer');
+const { transformNSETickerData } = require('./nseTickerTransformer');
 
 /**
  * Convert NSE date format to ISO format
@@ -102,6 +103,21 @@ const PAYLOAD_FORMATS = {
     },
     transformer: transformNSELivePrice,
     endpoints: ['/bulk/prices/live']
+  },
+  
+  NSE_TICKER_FORMAT: {
+    name: 'NSE Ticker Format',
+    description: 'NIFTY 50 ticker data with live stock prices',
+    detector: (payload) => {
+      return payload.data && 
+             Array.isArray(payload.data) && 
+             payload.timestamp &&
+             payload.name &&
+             (payload.advance || payload.metadata) &&
+             payload.data.some(item => item.symbol && item.lastPrice !== undefined);
+    },
+    transformer: transformNSETickerData,
+    endpoints: ['/bulk/ticker']
   },
   
   NSE_DIRECT_FORMAT: {

@@ -7,6 +7,10 @@ const config = require('./config/config');
 const logger = require('./config/logger');
 const db = require('./database/models');
 const alertScheduler = require('./jobs/alertScheduler');
+const moment = require('moment-timezone');
+
+// Set timezone for the application
+moment.tz.setDefault(config.timezone);
 
 // Normalize port
 const normalizePort = (val) => {
@@ -59,7 +63,7 @@ const onListening = () => {
   const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
   logger.info(`Server listening on ${bind}`);
   logger.info(`Environment: ${config.env}`);
-  logger.info(`API URL: http://localhost:${port}${config.apiPrefix}`);
+  // logger.info(`API URL: http://localhost:${port}${config.apiPrefix}`);
 };
 
 // Sync database and start server

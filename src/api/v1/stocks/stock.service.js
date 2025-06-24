@@ -6,6 +6,7 @@ const { Op } = require('sequelize');
 const ApiError = require('../../../core/utils/ApiError');
 const errorMessages = require('../../../constants/errorMessages');
 const db = require('../../../database/models');
+const { logger } = require('sequelize/lib/utils/logger');
 
 /**
  * Get stocks with pagination, filtering and search
@@ -1220,6 +1221,114 @@ const processCompleteMarketData = async (data) => {
   }
 };
 
+
+/**
+ * Bulk insert/update ticker data for multiple stocks
+ * @param {Array} tickerData - Array of ticker data objects
+ * @returns {Promise<Object>} Processing results with counts of created, updated, and skipped records
+ */
+const bulkInsertTickerData = async (tickerData) => {
+  if (!Array.isArray(tickerData) || tickerData.length === 0) {
+    return {
+      totalSubmitted: 0,
+      processed: 0,
+      created: 0,
+      updated: 0,
+      skipped: [],
+      errors: []
+    };
+  }
+
+  const result = {
+    totalSubmitted: tickerData.length,
+    processed: 0,
+    created: 0,
+    updated: 0,
+    skipped: [],
+    errors: []
+  };
+
+  try {
+    // Get all unique symbols from ticker data that don't have stockId
+    const symbolsToLookup = [...new Set(
+      tickerData
+        .filter(td => !td.stockId && td.symbol)
+        .map(td => td.symbol)
+    )];
+    
+    // Create symbol to stockId mapping for missing stockIds
+    let symbolToIdMap = {};
+    if (symbolsToLookup.length > 0) {
+      const stocks = await db.Stock.findAll({
+        where: {
+          symbol: {
+            [Op.in]: symbolsToLookup
+          }
+        }
+      });
+      
+      stocks.forEach(stock => {
+        symbolToIdMap[stock.symbol] = stock.id;
+      });
+    }
+
+    // Process ticker data to ensure each item has a valid stockId
+    const validTickerData = [];
+    tickerData.forEach(td => {
+      let stockId = td.stockId;
+      
+      // If no stockId provided, try to find it by symbol
+      if (!stockId && td.symbol && symbolToIdMap[td.symbol]) {
+        stockId = symbolToIdMap[td.symbol];
+      }
+      
+      if (stockId) {
+        validTickerData.push({
+          ...td,
+          stockId: stockId,
+          // Use the timestamp from the payload if it exists, otherwise use the current time
+          lastUpdateTime: td.lastUpdateTime || td.timestamp || new Date()
+        });
+      } else {
+        // Skip this ticker data if no stockId can be determined
+        result.skipped.push({
+          symbol: td.symbol || 'unknown',
+          reason: 'Stock not found in database'
+        });
+      }
+    });
+
+    if (validTickerData.length === 0) {
+      return result;
+    }
+
+    // Use bulkCreate to insert new ticker records
+    // Each ticker is unique based on stockId + lastUpdateTime
+    const processedRecords = await db.TradingTicker.bulkCreate(validTickerData, {
+      ignoreDuplicates: true // Skip duplicates instead of updating
+    });
+
+    // Count created records (no updates since we only insert)
+    result.created = processedRecords.length;
+    result.updated = 0; // No updates in ticker data
+    result.processed = processedRecords.length;
+    
+    return result;
+  } catch (error) {
+    // Log error but don't throw it
+    console.error('Error in bulkInsertTickerData:', error);
+    
+    // Return partial results with error information
+    result.errors.push({
+      message: error.message,
+      stack: error.stack,
+      details: 'Column lastUpdateTime cannot be null - ensure each ticker has a timestamp'
+    });
+    
+    return result;
+  }
+};
+
 module.exports = {
   getStocks,
   getStockById,
@@ -1241,5 +1350,6 @@ module.exports = {
   processCompleteMarketData,
   getNSEExchangeId,
   getINRCurrencyId,
-  findOrCreateDetailedSector
+  findOrCreateDetailedSector,
+  bulkInsertTickerData
 };

@@ -21,7 +21,7 @@ router.get(
   catchAsync(stocksController.getStocks)
 );
 
-// Bulk update prices from NSE JSON data (admin only)
+// Bulk update prices from NSE JSON data (admin only) for frontend (form in trading assistant page)
 router.post(
   '/bulk/prices',
   authenticate,
@@ -30,7 +30,7 @@ router.post(
   catchAsync(stocksController.bulkUpdatePrices)
 );
 
-// Bulk update live prices from NSE real-time feed (admin only)
+// Bulk update live prices from NSE real-time feed (admin only) for nse live prices page browser extension
 router.post(
   '/bulk/prices/live',
   authenticate,
@@ -48,6 +48,16 @@ router.post(
   validate(stocksValidation.completeMarketData.body),
   payloadTransformer(createTransformerForEndpoint('/complete-market-data')),
   catchAsync(stocksController.completeMarketData)
+);
+
+// Bulk insert/update ticker data for multiple stocks
+router.post(
+  '/bulk/ticker',
+  authenticate,
+  authorize('admin'),
+  validate(stocksValidation.bulkUpdateLivePrices.body),
+  payloadTransformer(createTransformerForEndpoint('/bulk/ticker')),
+  catchAsync(stocksController.bulkInsertTickerData)
 );
 
 // Get stock by ID

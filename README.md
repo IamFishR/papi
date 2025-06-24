@@ -148,6 +148,7 @@ This project uses the following packages to provide a robust and secure API:
 - **Surveillance Tracking**: GSM, ASM, and other surveillance stage monitoring
 - **FNO Status**: Futures & Options enabled stock identification
 - **Comprehensive Price Data**: Enhanced OHLC with Indian market specifics
+- **Real-time Ticker Data**: Fast ticker data ingestion with timestamp-based uniqueness
 
 ### 🚨 Advanced Alert System
 - Multi-condition alerts with various trigger types:
@@ -254,6 +255,11 @@ This project uses the following packages to provide a robust and secure API:
 - `GET /api/v1/stocks/:id/prices` - Get enhanced stock price history
 - `POST /api/v1/stocks/:id/prices` - Add enhanced stock price data
 - `POST /api/v1/stocks/bulk/prices` - Bulk update prices with Indian market data
+
+#### Real-time Ticker Data ⭐ **NEW**
+- `POST /api/v1/stocks/bulk/ticker-data` - **NEW**: Bulk insert real-time ticker data with timestamp uniqueness
+- `GET /api/v1/stocks/ticker-data` - **NEW**: Get latest ticker data for all stocks
+- `GET /api/v1/stocks/:id/ticker-data` - **NEW**: Get ticker data history for specific stock
 
 ### Alerts
 - `GET /api/v1/alerts` - Get user's alerts
@@ -382,6 +388,7 @@ The API uses MySQL with the following key entities:
 - **Users** - User accounts with role-based permissions
 - **Stocks** - Stock information with **enhanced Indian market data** (ISIN, FNO, surveillance, etc.)
 - **StockPrices** - Historical price data with **Indian market specifics** (VWAP, circuit breakers, 52-week data)
+- **TradingTickers** - **NEW**: Real-time ticker data with timestamp-based uniqueness for fast ingestion
 - **Exchanges** - Stock exchange reference data
 - **Sectors** - Industry sector classifications (legacy)
 - **Currencies** - Supported currencies

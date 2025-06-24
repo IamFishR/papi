@@ -26,11 +26,11 @@ const payloadTransformer = (transformerFn) => {
         keys = Object.keys(transformedPayload);
       }
 
-      logger.info('Payload transformed successfully', {
-        endpoint: req.originalUrl,
-        method: req.method,
-        transformedPayload: keys.length > 0 ? keys : 'No keys in transformed payload'
-      });
+      // logger.info('Payload transformed successfully', {
+      //   endpoint: req.originalUrl,
+      //   method: req.method,
+      //   transformedPayload: keys.length > 0 ? keys : 'No keys in transformed payload'
+      // });
       // Replace the original body with transformed payload
       req.body = transformedPayload;
       

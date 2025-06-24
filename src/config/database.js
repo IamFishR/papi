@@ -15,12 +15,13 @@ module.exports = {
       dateStrings: true,
       typeCast: true,
     },
-    timezone: '+00:00', // For writing to database
+    timezone: '+05:30', // For writing to database
     define: {
       timestamps: true,
       underscored: true,
       createdAt: 'created_at',
-      updatedAt: 'updated_at',    },
+      updatedAt: 'updated_at',
+    },
     logging: false, // Disable SQL logging completely
     pool: {
       max: 5,

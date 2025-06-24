@@ -124,15 +124,35 @@ const createAlert = async (alertData, userId) => {
     }
   }
 
+  // Get baseline price for forward-looking alerts
+  let baselinePrice = null;
+  let baselineTimestamp = null;
+  
+  if (alertData.stockId) {
+    const latestPrice = await db.StockPrice.findOne({
+      where: { stockId: alertData.stockId },
+      order: [['created_at', 'DESC']]
+    });
+    
+    if (latestPrice) {
+      baselinePrice = latestPrice.price;
+      baselineTimestamp = latestPrice.created_at;
+    }
+  }
+
   // Add userId and set default values for required fields
   const alertWithUserId = {
     ...alertData,
     userId,
+    baselinePrice,
+    baselineTimestamp,
     // Set default values for required fields if not provided
     notificationMethodId: alertData.notificationMethodId || 1, // Default to first notification method
     statusId: alertData.statusId || 1, // Default to active status
     priorityId: alertData.priorityId || 2, // Default to medium priority
     startDate: alertData.startDate || new Date(), // Default to current date
+    marketHoursOnly: alertData.marketHoursOnly !== undefined ? alertData.marketHoursOnly : true,
+    volumeConfirmation: alertData.volumeConfirmation || false,
   };
 
   // Create alert
@@ -346,14 +366,35 @@ const checkAlertConditions = async (alert) => {
 };
 
 /**
- * Check price alert conditions
+ * Check price alert conditions with forward-looking logic
  * @param {Object} alert - Price alert object
  * @returns {Promise<boolean>} True if price conditions are met
  */
 const checkPriceAlertConditions = async (alert) => {
-  // Get latest stock price
+  // Check cooldown period first
+  if (alert.lastTriggered && alert.cooldownMinutes) {
+    const timeSinceLastTrigger = Date.now() - new Date(alert.lastTriggered).getTime();
+    const cooldownMs = alert.cooldownMinutes * 60 * 1000;
+    
+    if (timeSinceLastTrigger < cooldownMs) {
+      return false; // Still in cooldown period
+    }
+  }
+
+  // Market hours check
+  if (alert.marketHoursOnly && !isMarketHours()) {
+    return false;
+  }
+
+  // Get latest stock price (only data after alert creation)
   const latestPrice = await db.StockPrice.findOne({
-    where: { stockId: alert.stockId },
+    where: { 
+      stockId: alert.stockId,
+      // Only check prices after the alert baseline timestamp
+      ...(alert.baselineTimestamp && {
+        created_at: { [Op.gte]: alert.baselineTimestamp }
+      })
+    },
     order: [['created_at', 'DESC']]
   });
   
@@ -361,52 +402,100 @@ const checkPriceAlertConditions = async (alert) => {
     return false;
   }
 
-  // Check condition based on threshold condition
-  const price = latestPrice.price;
-  const threshold = alert.priceThreshold; // Changed from thresholdValue to priceThreshold
+  // Volume confirmation if required
+  if (alert.volumeConfirmation && latestPrice.volume) {
+    const avgVolume = await getAverageVolume(alert.stockId, 30); // 30-day average
+    if (latestPrice.volume < avgVolume * 1.5) {
+      return false; // Volume too low to confirm movement
+    }
+  }
+
+  const currentPrice = latestPrice.price;
+  const threshold = alert.priceThreshold;
+  const baselinePrice = alert.baselinePrice;
   
   switch (alert.thresholdCondition.name) {
     case 'above':
-      return price > threshold;
+      return currentPrice > threshold;
     
     case 'below':
-      return price < threshold;
+      return currentPrice < threshold;
     
     case 'crosses_above':
-      // For crosses_above, we need the previous price
-      const previousPrice = await db.StockPrice.findOne({
-        where: { 
-          stockId: alert.stockId,
-          created_at: { [Op.lt]: latestPrice.created_at }
-        },
-        order: [['created_at', 'DESC']]
-      });
-      
-      if (!previousPrice) {
-        return false;
+      // Forward-looking: only trigger if baseline was below threshold and current is above
+      if (!baselinePrice) {
+        return false; // No baseline to compare
       }
-      
-      return previousPrice.price <= threshold && price > threshold;
+      const wasBelow = baselinePrice <= threshold;
+      const isNowAbove = currentPrice > threshold;
+      return wasBelow && isNowAbove;
     
     case 'crosses_below':
-      // For crosses_below, we need the previous price
-      const prevPrice = await db.StockPrice.findOne({
-        where: { 
-          stockId: alert.stockId,
-          created_at: { [Op.lt]: latestPrice.created_at }
-        },
-        order: [['created_at', 'DESC']]
-      });
-      
-      if (!prevPrice) {
-        return false;
+      // Forward-looking: only trigger if baseline was above threshold and current is below
+      if (!baselinePrice) {
+        return false; // No baseline to compare
       }
-      
-      return prevPrice.price >= threshold && price < threshold;
+      const wasAbove = baselinePrice >= threshold;
+      const isNowBelow = currentPrice < threshold;
+      return wasAbove && isNowBelow;
     
     default:
       throw new Error(`Unsupported threshold condition: ${alert.thresholdCondition.name}`);
   }
+};
+
+/**
+ * Check if current time is within market hours
+ * @returns {boolean} True if within market hours
+ */
+const isMarketHours = () => {
+  const now = new Date();
+  const day = now.getDay(); // 0 = Sunday, 6 = Saturday
+  const hour = now.getHours();
+  const minute = now.getMinutes();
+  
+  // Skip weekends
+  if (day === 0 || day === 6) {
+    return false;
+  }
+  
+  // Market hours 9:15 AM to 3:30 PM IST
+  const marketStartHour = parseInt(process.env.MARKET_START_HOUR || '9');
+  const marketStartMinute = parseInt(process.env.MARKET_START_MINUTE || '15');
+  const marketEndHour = parseInt(process.env.MARKET_END_HOUR || '15');
+  const marketEndMinute = parseInt(process.env.MARKET_END_MINUTE || '30');
+  
+  const currentTime = hour * 60 + minute;
+  const marketStart = marketStartHour * 60 + marketStartMinute;
+  const marketEnd = marketEndHour * 60 + marketEndMinute;
+  
+  return currentTime >= marketStart && currentTime <= marketEnd;
+};
+
+/**
+ * Get average volume for a stock over specified days
+ * @param {number} stockId - Stock ID
+ * @param {number} days - Number of days to average
+ * @returns {Promise<number>} Average volume
+ */
+const getAverageVolume = async (stockId, days = 30) => {
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+  
+  const historicalPrices = await db.StockPrice.findAll({
+    where: {
+      stockId,
+      created_at: { [Op.gte]: startDate }
+    },
+    attributes: ['volume']
+  });
+  
+  if (historicalPrices.length === 0) {
+    return 0;
+  }
+  
+  const totalVolume = historicalPrices.reduce((sum, price) => sum + (price.volume || 0), 0);
+  return totalVolume / historicalPrices.length;
 };
 
 /**
@@ -562,7 +651,7 @@ const checkNewsAlertConditions = async (alert) => {
 };
 
 /**
- * Create alert history record
+ * Create alert history record with forward-looking context
  * @param {Object} alert - Alert object
  * @returns {Promise<Object>} Created alert history record
  */
@@ -570,14 +659,22 @@ const createAlertHistory = async (alert) => {
   // Get the relevant trigger value based on trigger type
   let triggerValue = null;
   let stockPrice = null;
+  let triggerVolume = null;
   
   switch (alert.triggerType.name) {
     case 'stock_price':
       stockPrice = await db.StockPrice.findOne({
-        where: { stockId: alert.stockId },
+        where: { 
+          stockId: alert.stockId,
+          // Only get prices after baseline for forward-looking context
+          ...(alert.baselineTimestamp && {
+            created_at: { [Op.gte]: alert.baselineTimestamp }
+          })
+        },
         order: [['created_at', 'DESC']]
       });
       triggerValue = stockPrice ? stockPrice.price : null;
+      triggerVolume = stockPrice ? stockPrice.volume : null;
       break;
     
     case 'volume':
@@ -586,6 +683,7 @@ const createAlertHistory = async (alert) => {
         order: [['created_at', 'DESC']]
       });
       triggerValue = stockPrice ? stockPrice.volume : null;
+      triggerVolume = stockPrice ? stockPrice.volume : null;
       break;
     
     case 'technical_indicator':
@@ -601,14 +699,33 @@ const createAlertHistory = async (alert) => {
       break;
   }
 
-  // Create history record
+  // Calculate price change metrics for forward-looking context
+  const priceChange = (triggerValue && alert.baselinePrice) 
+    ? triggerValue - alert.baselinePrice 
+    : null;
+  const priceChangePercent = (priceChange && alert.baselinePrice) 
+    ? (priceChange / alert.baselinePrice) * 100 
+    : null;
+
+  // Create enhanced history record with forward-looking context
   const alertHistory = await db.AlertHistory.create({
     alertId: alert.id,
     userId: alert.userId,
     stockId: alert.stockId,
     triggerValue,
-    thresholdValue: alert.priceThreshold, // Changed from thresholdValue to priceThreshold
-    triggeredAt: new Date()
+    thresholdValue: alert.priceThreshold,
+    triggeredAt: new Date(),
+    // Add forward-looking context fields
+    baselinePrice: alert.baselinePrice,
+    priceChange,
+    priceChangePercent,
+    triggerVolume,
+    marketContext: JSON.stringify({
+      isMarketHours: isMarketHours(),
+      alertAge: alert.baselineTimestamp ? 
+        Math.floor((Date.now() - new Date(alert.baselineTimestamp).getTime()) / (1000 * 60)) : null, // minutes
+      volumeConfirmationUsed: alert.volumeConfirmation
+    })
   });
 
   return alertHistory;
@@ -783,7 +900,9 @@ const processAllAlerts = async () => {
       // Add attributes option to explicitly select only the columns we need
       attributes: [
         'id', 'userId', 'stockId', 'triggerTypeId', 'name', 'description',
-        'priceThreshold', 'thresholdConditionId', 'isActive', 'lastTriggered'
+        'priceThreshold', 'thresholdConditionId', 'isActive', 'lastTriggered',
+        'baselinePrice', 'baselineTimestamp', 'marketHoursOnly', 'volumeConfirmation',
+        'cooldownMinutes'
       ]
     });
 
