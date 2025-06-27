@@ -1313,7 +1313,11 @@ const bulkInsertTickerData = async (tickerData) => {
           ...td,
           stockId: stockId,
           // Use the timestamp from the payload if it exists, otherwise use the current time
-          lastUpdateTime: td.lastUpdateTime || td.timestamp || new Date()
+          lastUpdateTime: td.lastUpdateTime && td.lastUpdateTime !== 'null' && td.lastUpdateTime !== '' 
+            ? td.lastUpdateTime 
+            : (td.timestamp && td.timestamp !== 'null' && td.timestamp !== '' 
+               ? td.timestamp 
+               : new Date().toISOString())
         });
       } else {
         // Skip this ticker data if no stockId can be determined

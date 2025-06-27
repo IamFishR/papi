@@ -104,6 +104,10 @@ const createAlert = {
     schedule_days: Joi.array().items(
       Joi.string().valid('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday')
     ),
+    
+    // Baseline data validation - optional but recommended for forward-looking alerts
+    baselinePrice: Joi.number().precision(4).allow(null),
+    baselineTimestamp: Joi.date().allow(null),
   }).custom((value, helpers) => {
     // Custom validation to ensure required fields are present based on trigger type
     const { triggerTypeId, stockId } = value;

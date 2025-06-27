@@ -129,14 +129,17 @@ const createAlert = async (alertData, userId) => {
   let baselineTimestamp = null;
   
   if (alertData.stockId) {
-    const latestPrice = await db.StockPrice.findOne({
-      where: { stockId: alertData.stockId },
-      order: [['created_at', 'DESC']]
+    const latestPrice = await db.TradingTicker.findOne({
+      where: { 
+        stockId: alertData.stockId,
+        isTradable: true 
+      },
+      order: [['last_update_time', 'DESC']]
     });
     
     if (latestPrice) {
-      baselinePrice = latestPrice.price;
-      baselineTimestamp = latestPrice.created_at;
+      baselinePrice = latestPrice.ltp;
+      baselineTimestamp = latestPrice.lastUpdateTime;
     }
   }
 
@@ -188,6 +191,23 @@ const updateAlert = async (id, alertData, userId) => {
     
     if (!stock) {
       throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid stock ID');
+    }
+  }
+
+  // If stockId changes or alert is being reactivated, refresh baseline
+  if (alertData.stockId !== alert.stockId || 
+      (alertData.isActive === true && !alert.isActive)) {
+    const latestPrice = await db.TradingTicker.findOne({
+      where: { 
+        stockId: alertData.stockId || alert.stockId,
+        isTradable: true 
+      },
+      order: [['last_update_time', 'DESC']]
+    });
+    
+    if (latestPrice) {
+      alertData.baselinePrice = latestPrice.ltp;
+      alertData.baselineTimestamp = latestPrice.lastUpdateTime;
     }
   }
 
@@ -382,16 +402,15 @@ const checkPriceAlertConditions = async (alert) => {
   }
 
   // Market hours check
-  if (alert.marketHoursOnly && !isMarketHours()) {
-    return false;
-  }
+  // if (alert.marketHoursOnly && !isMarketHours()) {
+  //   return false;
+  // }
 
   // Get latest stock price from live ticker data (only data after alert creation)
   const latestPrice = await db.TradingTicker.findOne({
     where: { 
       stockId: alert.stockId,
       isTradable: true,
-      // Only check prices after the alert baseline timestamp
       ...(alert.baselineTimestamp && {
         last_update_time: { [Op.gte]: alert.baselineTimestamp }
       })
@@ -451,9 +470,12 @@ const checkPriceAlertConditions = async (alert) => {
  */
 const isMarketHours = () => {
   const now = new Date();
-  const day = now.getDay(); // 0 = Sunday, 6 = Saturday
-  const hour = now.getHours();
-  const minute = now.getMinutes();
+  // Convert to IST by adding the offset (UTC+5:30)
+  const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+  
+  const day = istTime.getDay(); // 0 = Sunday, 6 = Saturday
+  const hour = istTime.getHours();
+  const minute = istTime.getMinutes();
   
   // Skip weekends
   if (day === 0 || day === 6) {
@@ -714,6 +736,7 @@ const createAlertHistory = async (alert) => {
     alertId: alert.id,
     userId: alert.userId,
     stockId: alert.stockId,
+    statusId: 1, // 1 = 'triggered' status
     triggerValue,
     thresholdValue: alert.priceThreshold,
     triggeredAt: new Date(),

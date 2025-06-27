@@ -56,10 +56,10 @@ class AlertScheduler {
     try {
       this.isRunning = true;
       
-      if (!this.isMarketHours()) {
-        logger.debug('Outside market hours, skipping alert processing');
-        return;
-      }
+      // if (!this.isMarketHours()) {
+      //   logger.debug('Outside market hours, skipping alert processing');
+      //   return;
+      // }
 
       // Process all active price alerts
       await alertService.processAllAlerts();

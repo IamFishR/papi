@@ -223,6 +223,31 @@ This project uses the following packages to provide a robust and secure API:
 - Database migrations and seeding system
 - Security headers and XSS protection
 
+## Current Implementation Status
+
+### ✅ **FULLY IMPLEMENTED & ACCESSIBLE**
+- **Authentication** - All endpoints working (register, login, logout, tokens, etc.)
+- **Users** - Complete user management with admin controls
+- **Stocks** - Core CRUD operations, bulk updates, enhanced filtering
+- **Alerts** - Complete alert system with conditions and history
+- **Trading Journal** - Trade entries and custom tags management
+- **Watchlists** - Watchlist CRUD and stock management
+- **Notifications** - Basic notification system
+
+### ⚠️ **IMPLEMENTED BUT NOT ACCESSIBLE** (_coming_soon_feature_)
+These features are fully coded but routes are not registered in the main router:
+- **Pre-Market Trading** - Complete implementation exists
+- **Stock Indices** - Complete NIFTY indices system exists  
+- **Detailed Sectors** - 4-level sector hierarchy system exists
+
+### 🔧 **PARTIALLY IMPLEMENTED** (_coming_soon_feature_)
+- **Stocks** - Missing specialized endpoints (by-ISIN, FNO-enabled, surveillance)
+- **Valuation Metrics** - Service layer complete, routes/controller missing
+
+### ❌ **MENTIONED IN DOCS BUT NOT IMPLEMENTED** (_coming_soon_feature_)
+- Some advanced stock filtering endpoints
+- Some enhanced ticker data endpoints
+
 ## API Endpoints
 
 ### Authentication
@@ -244,22 +269,22 @@ This project uses the following packages to provide a robust and secure API:
 ### Stocks ⭐ **ENHANCED**
 - `GET /api/v1/stocks` - Get all stocks with enhanced filtering (ISIN, FNO, surveillance)
 - `GET /api/v1/stocks/:id` - Get stock by ID
-- `GET /api/v1/stocks/by-isin/:isin` - **NEW**: Get stock by ISIN
-- `GET /api/v1/stocks/fno-enabled` - **NEW**: Get FNO enabled stocks
-- `GET /api/v1/stocks/surveillance/:stage` - **NEW**: Get stocks by surveillance stage
-- `GET /api/v1/stocks/sector-detailed/:sectorId` - **NEW**: Get stocks by detailed sector
+- `GET /api/v1/stocks/by-isin/:isin` - (_coming_soon_feature_) Get stock by ISIN
+- `GET /api/v1/stocks/fno-enabled` - (_coming_soon_feature_) Get FNO enabled stocks
+- `GET /api/v1/stocks/surveillance/:stage` - (_coming_soon_feature_) Get stocks by surveillance stage
+- `GET /api/v1/stocks/sector-detailed/:sectorId` - (_coming_soon_feature_) Get stocks by detailed sector
 - `POST /api/v1/stocks` - Create new stock with Indian fields (admin only)
 - `PUT /api/v1/stocks/:id` - Update stock with Indian fields (admin only)
-- `PUT /api/v1/stocks/:id/indian-fields` - **NEW**: Update Indian-specific fields (admin only)
+- `PUT /api/v1/stocks/:id/indian-fields` - (_coming_soon_feature_) Update Indian-specific fields (admin only)
 - `DELETE /api/v1/stocks/:id` - Delete stock (admin only)
 - `GET /api/v1/stocks/:id/prices` - Get enhanced stock price history
 - `POST /api/v1/stocks/:id/prices` - Add enhanced stock price data
 - `POST /api/v1/stocks/bulk/prices` - Bulk update prices with Indian market data
 
 #### Real-time Ticker Data ⭐ **NEW**
-- `POST /api/v1/stocks/bulk/ticker-data` - **NEW**: Bulk insert real-time ticker data with timestamp uniqueness
-- `GET /api/v1/stocks/ticker-data` - **NEW**: Get latest ticker data for all stocks
-- `GET /api/v1/stocks/:id/ticker-data` - **NEW**: Get ticker data history for specific stock
+- `POST /api/v1/stocks/bulk/ticker` - Bulk insert real-time ticker data with timestamp uniqueness
+- `GET /api/v1/stocks/ticker-data` - (_coming_soon_feature_) Get latest ticker data for all stocks
+- `GET /api/v1/stocks/:id/ticker-data` - (_coming_soon_feature_) Get ticker data history for specific stock
 
 ### Alerts
 - `GET /api/v1/alerts` - Get user's alerts
@@ -267,7 +292,7 @@ This project uses the following packages to provide a robust and secure API:
 - `POST /api/v1/alerts` - Create new alert
 - `PUT /api/v1/alerts/:id` - Update alert
 - `DELETE /api/v1/alerts/:id` - Delete alert
-- `POST /api/v1/alerts/:id/trigger` - Manually trigger alert
+- `POST /api/v1/alerts/:id/trigger` - (_coming_soon_feature_) Manually trigger alert
 - `GET /api/v1/alerts/history` - Get alert history
 
 ### Trading Journal
@@ -293,50 +318,50 @@ This project uses the following packages to provide a robust and secure API:
 
 ### 🇮🇳 Indian Market APIs ⭐ **NEW**
 
-#### Detailed Sectors
-- `GET /api/v1/sectors/detailed` - Get detailed sectors with 4-level hierarchy
-- `GET /api/v1/sectors/detailed/:id` - Get detailed sector by ID
-- `GET /api/v1/sectors/detailed/hierarchy` - Get complete sector hierarchy
-- `GET /api/v1/sectors/detailed/search` - Search sectors by keyword
-- `GET /api/v1/sectors/detailed/macro/:macroSector` - Get sectors by macro sector
-- `GET /api/v1/sectors/detailed/:id/stocks` - Get stocks in detailed sector
-- `POST /api/v1/sectors/detailed` - Create detailed sector (admin only)
-- `PUT /api/v1/sectors/detailed/:id` - Update detailed sector (admin only)
-- `DELETE /api/v1/sectors/detailed/:id` - Delete detailed sector (admin only)
+#### Detailed Sectors - (_coming_soon_feature_) **Routes Not Yet Registered**
+- `GET /api/v1/sectors/detailed` - (_coming_soon_feature_) Get detailed sectors with 4-level hierarchy
+- `GET /api/v1/sectors/detailed/:id` - (_coming_soon_feature_) Get detailed sector by ID
+- `GET /api/v1/sectors/detailed/hierarchy` - (_coming_soon_feature_) Get complete sector hierarchy
+- `GET /api/v1/sectors/detailed/search` - (_coming_soon_feature_) Search sectors by keyword
+- `GET /api/v1/sectors/detailed/macro/:macroSector` - (_coming_soon_feature_) Get sectors by macro sector
+- `GET /api/v1/sectors/detailed/:id/stocks` - (_coming_soon_feature_) Get stocks in detailed sector
+- `POST /api/v1/sectors/detailed` - (_coming_soon_feature_) Create detailed sector (admin only)
+- `PUT /api/v1/sectors/detailed/:id` - (_coming_soon_feature_) Update detailed sector (admin only)
+- `DELETE /api/v1/sectors/detailed/:id` - (_coming_soon_feature_) Delete detailed sector (admin only)
 
-#### Pre-Market Trading
-- `GET /api/v1/pre-market/summary` - Get pre-market summary for date
-- `GET /api/v1/pre-market/movers` - Get top gainers/losers in pre-market
-- `GET /api/v1/pre-market/stocks/:stockId` - Get pre-market data for stock
-- `GET /api/v1/pre-market/stocks/:stockId/iep` - Get current IEP for stock
-- `GET /api/v1/pre-market/stocks/:stockId/history` - Get historical pre-market data
-- `POST /api/v1/pre-market/data` - Add pre-market data (admin only)
-- `PUT /api/v1/pre-market/data/:id` - Update pre-market data (admin only)
-- `POST /api/v1/pre-market/data/:id/orders` - Add order book data (admin only)
-- `POST /api/v1/pre-market/multiple-stocks` - Get multiple stocks pre-market data
+#### Pre-Market Trading - (_coming_soon_feature_) **Routes Not Yet Registered**
+- `GET /api/v1/pre-market/summary` - (_coming_soon_feature_) Get pre-market summary for date
+- `GET /api/v1/pre-market/movers` - (_coming_soon_feature_) Get top gainers/losers in pre-market
+- `GET /api/v1/pre-market/stocks/:stockId` - (_coming_soon_feature_) Get pre-market data for stock
+- `GET /api/v1/pre-market/stocks/:stockId/iep` - (_coming_soon_feature_) Get current IEP for stock
+- `GET /api/v1/pre-market/stocks/:stockId/history` - (_coming_soon_feature_) Get historical pre-market data
+- `POST /api/v1/pre-market/data` - (_coming_soon_feature_) Add pre-market data (admin only)
+- `PUT /api/v1/pre-market/data/:id` - (_coming_soon_feature_) Update pre-market data (admin only)
+- `POST /api/v1/pre-market/data/:id/orders` - (_coming_soon_feature_) Add order book data (admin only)
+- `POST /api/v1/pre-market/multiple-stocks` - (_coming_soon_feature_) Get multiple stocks pre-market data
 
-#### Stock Indices
-- `GET /api/v1/indices` - Get all stock indices
-- `GET /api/v1/indices/:id` - Get index by ID
-- `GET /api/v1/indices/:id/memberships` - Get index memberships
-- `GET /api/v1/indices/:id/composition` - Get index composition summary
-- `GET /api/v1/indices/type/:type` - Get indices by type
-- `GET /api/v1/indices/stocks/:stockId/memberships` - Get stock's index memberships
-- `POST /api/v1/indices` - Create new index (admin only)
-- `PUT /api/v1/indices/:id` - Update index (admin only)
-- `DELETE /api/v1/indices/:id` - Delete index (admin only)
-- `POST /api/v1/indices/:id/stocks` - Add stock to index (admin only)
-- `DELETE /api/v1/indices/:id/stocks/:stockId` - Remove stock from index (admin only)
-- `PUT /api/v1/indices/:id/weights` - Update index weights (admin only)
+#### Stock Indices - (_coming_soon_feature_) **Routes Not Yet Registered**
+- `GET /api/v1/indices` - (_coming_soon_feature_) Get all stock indices
+- `GET /api/v1/indices/:id` - (_coming_soon_feature_) Get index by ID
+- `GET /api/v1/indices/:id/memberships` - (_coming_soon_feature_) Get index memberships
+- `GET /api/v1/indices/:id/composition` - (_coming_soon_feature_) Get index composition summary
+- `GET /api/v1/indices/type/:type` - (_coming_soon_feature_) Get indices by type
+- `GET /api/v1/indices/stocks/:stockId/memberships` - (_coming_soon_feature_) Get stock's index memberships
+- `POST /api/v1/indices` - (_coming_soon_feature_) Create new index (admin only)
+- `PUT /api/v1/indices/:id` - (_coming_soon_feature_) Update index (admin only)
+- `DELETE /api/v1/indices/:id` - (_coming_soon_feature_) Delete index (admin only)
+- `POST /api/v1/indices/:id/stocks` - (_coming_soon_feature_) Add stock to index (admin only)
+- `DELETE /api/v1/indices/:id/stocks/:stockId` - (_coming_soon_feature_) Remove stock from index (admin only)
+- `PUT /api/v1/indices/:id/weights` - (_coming_soon_feature_) Update index weights (admin only)
 
-#### Valuation Metrics
-- `GET /api/v1/valuation/stocks/:stockId` - Get valuation metrics for stock
-- `GET /api/v1/valuation/stocks/:stockId/history` - Get historical valuation data
-- `GET /api/v1/valuation/sector/:sectorId/comparison` - Get sector valuation comparison
-- `GET /api/v1/valuation/pe-comparison/:stockId` - Get P/E comparison vs sector
-- `GET /api/v1/valuation/sector/:sectorId/roe-leaders` - Get ROE leaders in sector
-- `GET /api/v1/valuation/screening` - Screen stocks by valuation criteria
-- `POST /api/v1/valuation/metrics` - Add valuation metrics (admin only)
+#### Valuation Metrics - (_coming_soon_feature_) **Service Exists, Routes/Controller Missing**
+- `GET /api/v1/valuation/stocks/:stockId` - (_coming_soon_feature_) Get valuation metrics for stock
+- `GET /api/v1/valuation/stocks/:stockId/history` - (_coming_soon_feature_) Get historical valuation data
+- `GET /api/v1/valuation/sector/:sectorId/comparison` - (_coming_soon_feature_) Get sector valuation comparison
+- `GET /api/v1/valuation/pe-comparison/:stockId` - (_coming_soon_feature_) Get P/E comparison vs sector
+- `GET /api/v1/valuation/sector/:sectorId/roe-leaders` - (_coming_soon_feature_) Get ROE leaders in sector
+- `GET /api/v1/valuation/screening` - (_coming_soon_feature_) Screen stocks by valuation criteria
+- `POST /api/v1/valuation/metrics` - (_coming_soon_feature_) Add valuation metrics (admin only)
 
 ## Testing
 
@@ -419,6 +444,12 @@ The API uses MySQL with the following key entities:
 - **StockNews** - Stock-news relationships
 
 ## Recent Updates
+
+### 📋 **Documentation Audit Update (December 2024)**
+**Current Status:** Complete audit of implemented vs documented features
+- **Identified Issue:** 3 major feature modules (Pre-Market, Indices, Sectors) are fully implemented but routes not registered
+- **Documentation Updated:** Added (_coming_soon_feature_) tags for features not yet accessible
+- **Action Required:** Route registration needed to make 60+ endpoints accessible
 
 ### 🇮🇳 Major Indian Market Enhancement (v2.0.0) ⭐ **NEW**
 **Released: June 2025**

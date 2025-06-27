@@ -9,7 +9,10 @@
  * @returns {string|null} ISO timestamp string or null
  */
 const convertNSETimestampToISO = (nseTimestamp) => {
-  if (!nseTimestamp) return null;
+  // Always return a valid timestamp, never null
+  if (!nseTimestamp || nseTimestamp === '' || nseTimestamp === 'null') {
+    return new Date().toISOString(); // Use current time as fallback
+  }
   
   try {
     // Handle format: "23-Jun-2025 11:57:37"
