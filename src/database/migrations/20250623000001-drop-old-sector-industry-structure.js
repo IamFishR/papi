@@ -5,13 +5,16 @@ module.exports = {
     const transaction = await queryInterface.sequelize.transaction();
     
     try {
-      // First, remove foreign key constraints from st_stocks table (using actual constraint names)
-      await queryInterface.removeConstraint('st_stocks', 'st_stocks_ibfk_2', { transaction });
-      await queryInterface.removeConstraint('st_stocks', 'st_stocks_industry_id_foreign_idx', { transaction });
+      // For PostgreSQL, check if columns exist before removing them
+      const stocksTableInfo = await queryInterface.describeTable('st_stocks');
       
-      // Remove the sector_id and industry_id columns from st_stocks
-      await queryInterface.removeColumn('st_stocks', 'sector_id', { transaction });
-      await queryInterface.removeColumn('st_stocks', 'industry_id', { transaction });
+      if (stocksTableInfo.sector_id) {
+        await queryInterface.removeColumn('st_stocks', 'sector_id', { transaction });
+      }
+      
+      if (stocksTableInfo.industry_id) {
+        await queryInterface.removeColumn('st_stocks', 'industry_id', { transaction });
+      }
       
       // Drop the industries table (has foreign key to sectors)
       await queryInterface.dropTable('st_industries', { transaction });

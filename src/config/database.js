@@ -12,8 +12,10 @@ module.exports = {
     port: config.db.port,
     dialect: config.db.dialect,
     dialectOptions: {
-      dateStrings: true,
-      typeCast: true,
+      ssl: {
+        require: true,
+        rejectUnauthorized: false
+      }
     },
     timezone: '+05:30', // For writing to database
     define: {

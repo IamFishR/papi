@@ -13,7 +13,7 @@ module.exports = {
         primaryKey: true,
       },
       level: {
-        type: Sequelize.TINYINT,
+        type: Sequelize.SMALLINT,
         allowNull: false,
         unique: true,
       },
