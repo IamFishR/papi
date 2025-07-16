@@ -72,7 +72,6 @@ const parseIntegerValue = (value) => {
  * @returns {Object} Transformed ticker data
  */
 const transformTickerItem = (tickerItem) => {
-  const lastUpdateTime = convertNSETimestampToISO(tickerItem.lastUpdateTime);
   
   return {
     symbol: tickerItem.symbol,
@@ -102,7 +101,7 @@ const transformTickerItem = (tickerItem) => {
     isTradable: true, // Assume tradable if data is present
     marketSession: 'REGULAR', // Default to regular session
     // Update tracking
-    lastUpdateTime: lastUpdateTime,
+    lastUpdateTime: tickerItem.lastUpdateTime,
     // Additional NSE specific data for reference
     meta: {
       priority: tickerItem.priority,

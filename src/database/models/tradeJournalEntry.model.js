@@ -18,10 +18,6 @@ module.exports = (sequelize) => {
         key: 'id',
       },
     },
-    tradeIdString: {
-      type: DataTypes.STRING,
-      field: 'trade_id_string',
-    },
     executionDate: {
       type: DataTypes.DATEONLY,
       field: 'execution_date',

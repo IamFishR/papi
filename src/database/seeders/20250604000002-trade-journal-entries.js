@@ -50,7 +50,6 @@ module.exports = {
       {
         id: uuidv4(),
         user_id: userId,
-        trade_id_string: 'AAPL-LONG-001',
         execution_date: new Date('2025-05-20'),
         instrument: 'AAPL',
         asset_class: 'Equity',
@@ -143,7 +142,6 @@ module.exports = {
       {
         id: uuidv4(),
         user_id: userId,
-        trade_id_string: 'TSLA-LONG-002',
         execution_date: new Date('2025-05-25'),
         instrument: 'TSLA',
         asset_class: 'Equity',
@@ -236,7 +234,6 @@ module.exports = {
       {
         id: uuidv4(),
         user_id: userId,
-        trade_id_string: 'AMZN-SHORT-003',
         execution_date: new Date('2025-06-02'),
         instrument: 'AMZN',
         asset_class: 'Equity',

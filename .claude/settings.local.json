@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run migration:create:*)",
+      "Bash(npm run:*)"
+    ],
+    "deny": []
+  }
+}

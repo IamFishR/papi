@@ -109,7 +109,7 @@ const updateTradeEntryParams = Joi.object({
  * Update trade entry validation schema (body)
  */
 const updateTradeEntryBody = Joi.object({
-  // Same as create but all fields optional  tradeIdString: Joi.string(),
+  // Same as create but all fields optional
   executionDate: Joi.date(),
   instrument: Joi.string(),
   assetClass: Joi.string().valid('Equity', 'Stock', 'Crypto', 'Forex', 'Futures', 'Options', 'Other'),
