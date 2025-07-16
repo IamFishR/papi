@@ -333,8 +333,8 @@ const processAlerts = async () => {
         // Record alert history
         await createAlertHistory(alert);
         
-        // Queue notification
-        await queueAlertNotification(alert);
+        // Skip notification queue - just save to history
+        // await queueAlertNotification(alert);
         
         // Update last triggered time
         await alert.update({
@@ -942,8 +942,8 @@ const processAllAlerts = async () => {
           // Record alert history
           await createAlertHistory(alert);
           
-          // Queue notification
-          await queueAlertNotification(alert);
+          // Skip notification queue - just save to history
+          // await queueAlertNotification(alert);
           
           // Update last triggered time
           await alert.update({

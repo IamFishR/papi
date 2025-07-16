@@ -8,7 +8,7 @@ const errorMessages = require('../../../constants/errorMessages');
 const db = require('../../../database/models');
 
 /**
- * Get notifications with filtering
+ * Get notifications from alert history (simplified approach)
  * @param {Object} filter - Filter options (status, method)
  * @param {Object} options - Query options (pagination, sorting)
  * @param {string} userId - User ID
@@ -19,54 +19,61 @@ const getNotifications = async (filter, options) => {
   const { limit, page, sortBy, sortOrder } = options;
   const offset = (page - 1) * limit;
 
-  // Prepare filter conditions
+  // Prepare filter conditions for alert history
   const whereConditions = { 
     userId 
   };
   
-  // Apply status filter if provided
-  if (filter.status) {
-    const notificationStatus = await db.NotificationStatus.findOne({
-      where: { id: filter.status }
-    });
+  // Add date filters if provided
+  if (filter.from || filter.to) {
+    whereConditions.triggeredAt = {};
     
-    if (notificationStatus) {
-      whereConditions.notificationStatusId = notificationStatus.id;
-    } else {
-      throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid notification status');
+    if (filter.from) {
+      whereConditions.triggeredAt[Op.gte] = new Date(filter.from);
     }
-  }
-  
-  // Apply method filter if provided
-  if (filter.method) {
-    const notificationMethod = await db.NotificationMethod.findOne({
-      where: { id: filter.method }
-    });
     
-    if (notificationMethod) {
-      whereConditions.notificationMethodId = notificationMethod.id;
-    } else {
-      throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid notification method');
+    if (filter.to) {
+      whereConditions.triggeredAt[Op.lte] = new Date(filter.to);
     }
   }
 
   // Execute query with includes for related data
-  const { rows, count } = await db.NotificationQueue.findAndCountAll({
+  const { rows, count } = await db.AlertHistory.findAndCountAll({
     where: whereConditions,
     limit,
     offset,
-    order: [[sortBy || 'scheduledTime', sortOrder || 'DESC']],
+    order: [[sortBy || 'triggeredAt', sortOrder || 'DESC']],
     include: [
-      { model: db.NotificationMethod, as: 'notificationMethod' },
-      { model: db.NotificationStatus, as: 'notificationStatus' },
-      { model: db.PriorityLevel, as: 'priority' },
-      { model: db.Alert, as: 'alert', include: [{ model: db.Stock, as: 'stock' }] }
+      { 
+        model: db.Alert, 
+        as: 'alert',
+        include: [
+          { model: db.Stock, as: 'stock' },
+          { model: db.TriggerType, as: 'triggerType' },
+          { model: db.ThresholdCondition, as: 'thresholdCondition' }
+        ]
+      },
+      { model: db.Stock, as: 'stock' },
+      { model: db.AlertStatus, as: 'status' }
     ]
   });
 
+  // Transform alert history into notification format expected by frontend
+  const notifications = rows.map(history => ({
+    id: history.id,
+    user_id: history.userId,
+    alert_id: history.alertId,
+    alert_history_id: history.id,
+    subject: `${history.alert?.name || 'Stock Alert'} - ${history.stock?.symbol}`,
+    message: formatAlertMessage(history),
+    scheduled_time: history.triggeredAt,
+    status: 'pending', // All alert history notifications are treated as pending
+    method: 'push' // Default method for frontend
+  }));
+
   // Return paginated result
   return {
-    notifications: rows,
+    notifications: notifications,
     pagination: {
       totalCount: count,
       totalPages: Math.ceil(count / limit),
@@ -77,38 +84,53 @@ const getNotifications = async (filter, options) => {
 };
 
 /**
- * Acknowledge a notification
- * @param {number} id - Notification ID
+ * Format alert message for notification display
+ * @param {Object} history - AlertHistory record
+ * @returns {string} Formatted message
+ */
+const formatAlertMessage = (history) => {
+  const stock = history.stock || history.alert?.stock;
+  const triggerValue = history.triggerValue;
+  const alert = history.alert;
+  
+  if (!stock || !alert) {
+    return 'Stock alert triggered';
+  }
+  
+  const condition = alert.thresholdCondition?.name || 'crossed threshold';
+  const threshold = alert.priceThreshold;
+  
+  return `${stock.symbol} price ${triggerValue} ${condition} threshold ${threshold}`;
+};
+
+/**
+ * Acknowledge a notification (simplified for alert history)
+ * @param {number} id - Alert History ID
  * @param {string} userId - User ID
- * @returns {Promise<Object>} Updated notification
+ * @returns {Promise<Object>} Success response
  */
 const acknowledgeNotification = async (id, userId) => {
-  // Find notification by ID and userId
-  const notification = await db.NotificationQueue.findOne({
+  // Find alert history record by ID and userId
+  const alertHistory = await db.AlertHistory.findOne({
     where: {
       id,
       userId
     }
   });
 
-  if (!notification) {
+  if (!alertHistory) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Notification not found');
   }
 
-  // Update notification status to acknowledged
-  await notification.update({
-    status: 'acknowledged',
+  // For the simplified system, we just mark it as acknowledged
+  // In the future, we could add an acknowledged field to AlertHistory
+  // For now, we'll just return success
+  
+  return {
+    id: alertHistory.id,
+    acknowledged: true,
     acknowledgedAt: new Date()
-  });
-
-  // Get the updated notification with related data
-  return db.NotificationQueue.findByPk(id, {
-    include: [
-      { model: db.NotificationMethod, as: 'notificationMethod' },
-      { model: db.PriorityLevel, as: 'priority' },
-      { model: db.Alert, as: 'alert', include: [{ model: db.Stock, as: 'stock' }] }
-    ]
-  });
+  };
 };
 
 /**

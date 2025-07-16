@@ -27,10 +27,24 @@ const validate = (schema, property = 'body') => {
       return next();
     }
     
+    const logger = require('../../config/logger');
+    
     const errors = error.details.map(detail => ({
       field: detail.path.join('.'),
       message: detail.message.replace(/['"]/g, ''),
     }));
+    
+    logger.error('Request validation failed', {
+      property: property,
+      requestPath: req.path,
+      requestMethod: req.method,
+      validationErrors: errors,
+      errorDetails: error.details
+    });
+    
+    logger.debug('Validation failed for request data', {
+      requestProperty: req[property]
+    });
     
     res.status(StatusCodes.BAD_REQUEST).json({
       status: 'error',

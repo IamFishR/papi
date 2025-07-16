@@ -291,6 +291,147 @@ const deleteUserCustomTagDirect = async (tag) => {
   return true;
 };
 
+/**
+ * Create a new trade journal entry (step-by-step version)
+ * @param {string} userId - The ID of the user creating the entry
+ * @param {Object} entryData - The trade entry data
+ * @param {number} initialStep - The initial step to start from (default: 0)
+ * @returns {Promise<Object>} - The created trade entry
+ */
+const createTradeEntryStepByStep = async (userId, entryData, initialStep = 0) => {
+  const stepCompletionStatus = {
+    0: false, 1: false, 2: false, 3: false, 4: false, 5: false
+  };
+  
+  // If starting from a specific step, mark previous steps as incomplete
+  const stepTimestamps = {};
+  
+  return TradeJournalEntry.create({ 
+    ...entryData,
+    userId,
+    currentStep: initialStep,
+    completedSteps: 0,
+    stepCompletionStatus,
+    stepTimestamps,
+    isComplete: false,
+    lastUpdatedStep: initialStep,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  });
+};
+
+/**
+ * Update a specific step of a trade journal entry
+ * @param {string} tradeId - The ID of the trade entry
+ * @param {string} userId - The ID of the user
+ * @param {number} stepNumber - The step number to update (0-5)
+ * @param {Object} stepData - The data for this step
+ * @returns {Promise<Object>} - The updated trade entry
+ */
+const updateTradeEntryStep = async (tradeId, userId, stepNumber, stepData) => {
+  const tradeEntry = await getTradeEntryById(tradeId, userId);
+  
+  // Validate step number
+  if (stepNumber < 0 || stepNumber > 5) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid step number. Must be between 0 and 5.');
+  }
+  
+  // Update the step completion status
+  const currentStepStatus = tradeEntry.stepCompletionStatus || {
+    0: false, 1: false, 2: false, 3: false, 4: false, 5: false
+  };
+  
+  const currentTimestamps = tradeEntry.stepTimestamps || {};
+  
+  // Mark this step as completed
+  currentStepStatus[stepNumber] = true;
+  currentTimestamps[stepNumber] = new Date();
+  
+  // Calculate completed steps count
+  const completedStepsCount = Object.values(currentStepStatus).filter(Boolean).length;
+  
+  // Determine if trade is complete (all 6 steps done)
+  const isComplete = completedStepsCount === 6;
+  
+  // Update trade entry
+  Object.assign(tradeEntry, {
+    ...stepData,
+    stepCompletionStatus: currentStepStatus,
+    stepTimestamps: currentTimestamps,
+    completedSteps: completedStepsCount,
+    currentStep: isComplete ? 5 : Math.min(stepNumber + 1, 5),
+    lastUpdatedStep: stepNumber,
+    isComplete,
+    updatedAt: new Date()
+  });
+  
+  await tradeEntry.save();
+  return tradeEntry;
+};
+
+/**
+ * Get incomplete trades for a user (for dashboard/continue workflow)
+ * @param {string} userId - The ID of the user
+ * @param {Object} options - Query options (sort, pagination)
+ * @returns {Promise<Object>} - Paginated result with incomplete trades
+ */
+const getIncompleteTradeEntries = async (userId, options = {}) => {
+  const { limit = 10, page = 1, sortBy = 'updatedAt:desc' } = options;
+  const offset = (page - 1) * limit;
+  
+  const query = {
+    where: { 
+      userId,
+      isComplete: false
+    },
+    limit,
+    offset,
+  };
+  
+  // Add sorting
+  if (sortBy) {
+    const [field, order] = sortBy.split(':');
+    query.order = [[field, order === 'desc' ? 'DESC' : 'ASC']];
+  }
+  
+  const { count, rows } = await TradeJournalEntry.findAndCountAll(query);
+  
+  return {
+    results: rows,
+    page,
+    limit,
+    totalPages: Math.ceil(count / limit),
+    totalResults: count,
+  };
+};
+
+/**
+ * Get completion statistics for a user
+ * @param {string} userId - The ID of the user
+ * @returns {Promise<Object>} - Completion statistics
+ */
+const getCompletionStats = async (userId) => {
+  const allTrades = await TradeJournalEntry.findAll({
+    where: { userId },
+    attributes: ['isComplete', 'completedSteps', 'stepCompletionStatus']
+  });
+  
+  const totalTrades = allTrades.length;
+  const completeTrades = allTrades.filter(trade => trade.isComplete).length;
+  const incompleteTrades = totalTrades - completeTrades;
+  
+  // Calculate average completion percentage
+  const totalStepsCompleted = allTrades.reduce((sum, trade) => sum + (trade.completedSteps || 0), 0);
+  const averageCompletionPercentage = totalTrades > 0 ? (totalStepsCompleted / (totalTrades * 6)) * 100 : 0;
+  
+  return {
+    totalTrades,
+    completeTrades,
+    incompleteTrades,
+    averageCompletionPercentage: Math.round(averageCompletionPercentage),
+  };
+};
+
 module.exports = {
   createTradeEntry,
   getTradeEntries,
@@ -306,4 +447,9 @@ module.exports = {
   updateUserCustomTagDirect,
   deleteUserCustomTag,
   deleteUserCustomTagDirect,
+  // New step-by-step functions
+  createTradeEntryStepByStep,
+  updateTradeEntryStep,
+  getIncompleteTradeEntries,
+  getCompletionStats,
 };

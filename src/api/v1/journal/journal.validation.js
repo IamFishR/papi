@@ -204,6 +204,65 @@ const deleteUserCustomTagParams = Joi.object({
   tagId: Joi.required().custom(objectId)
 });
 
+/**
+ * Create trade entry step-by-step validation schema
+ */
+const createTradeEntryStepByStep = Joi.object({
+  // Allow any fields from the main createTradeEntry schema
+  // Plus step-specific fields
+  initialStep: Joi.number().integer().min(0).max(5).default(0),
+  
+  // Core Info (required for step 0)
+  tradeIdString: Joi.string(),
+  executionDate: Joi.date(),
+  instrument: Joi.string(),
+  assetClass: Joi.string().valid('Equity', 'Stock', 'Crypto', 'Forex', 'Futures', 'Options', 'Other'),
+  direction: Joi.string().valid('Long', 'Short'),
+  
+  // All other fields from main schema (optional for step creation)
+  planDateTime: Joi.date(),
+  instrumentsWatched: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string()),
+  marketContextBias: Joi.string().valid('Bullish', 'Bearish', 'Neutral', 'Range-bound', 'Uncertain'),
+  tradeThesisCatalyst: Joi.string(),
+  setupConditions: Joi.alternatives().try(Joi.array(), Joi.object()),
+  plannedEntryZonePrice: Joi.number().precision(4),
+  plannedStopLossPrice: Joi.number().precision(4),
+  plannedTargetPrices: Joi.alternatives().try(Joi.array(), Joi.string()),
+  plannedPositionSizeValue: Joi.number().precision(4),
+  plannedPositionSizeType: Joi.string().valid('Shares/Units', 'Percentage Account', 'Fixed Risk Amount', 'Lots'),
+  calculatedMaxRiskOnPlan: Joi.number().precision(2),
+  calculatedPotentialRewardTp1: Joi.number().precision(2),
+  plannedRiskRewardRatioTp1: Joi.number().precision(2),
+  confidenceInPlan: Joi.number().integer().min(1).max(5),
+  invalidationConditions: Joi.string(),
+  
+  // Allow all other fields but make them optional
+}).unknown(true);
+
+/**
+ * Update trade entry step validation schema (params)
+ */
+const updateTradeEntryStepParams = Joi.object({
+  tradeId: Joi.required().custom(objectId),
+  stepNumber: Joi.number().integer().min(0).max(5).required()
+});
+
+/**
+ * Update trade entry step validation schema (body)
+ */
+const updateTradeEntryStepBody = Joi.object({
+  // Allow any fields from the main schema
+}).unknown(true);
+
+/**
+ * Get incomplete trade entries validation schema
+ */
+const getIncompleteTradeEntriesQuery = Joi.object({
+  sortBy: Joi.string().pattern(/^(updatedAt|createdAt|currentStep|completedSteps):(asc|desc)$/),
+  limit: Joi.number().integer().min(1).max(100).default(10),
+  page: Joi.number().integer().min(1).default(1),
+});
+
 // Export validation schemas
 module.exports = {
   createTradeEntry,
@@ -216,5 +275,10 @@ module.exports = {
   createUserCustomTag,
   updateUserCustomTagParams,
   updateUserCustomTagBody,
-  deleteUserCustomTagParams
+  deleteUserCustomTagParams,
+  // New step-by-step validation schemas
+  createTradeEntryStepByStep,
+  updateTradeEntryStepParams,
+  updateTradeEntryStepBody,
+  getIncompleteTradeEntriesQuery,
 };

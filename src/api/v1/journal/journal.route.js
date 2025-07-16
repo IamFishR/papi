@@ -19,6 +19,24 @@ router
   .put(auth, validate(journalValidation.updateTradeEntryParams, 'params'), validate(journalValidation.updateTradeEntryBody), authorizeTradeJournalResource(), journalController.updateTradeEntry)
   .delete(auth, validate(journalValidation.deleteTradeEntryParams, 'params'), authorizeTradeJournalResource(), journalController.deleteTradeEntry);
 
+// Step-by-step trade journal routes
+router
+  .route('/trades-stepwise')
+  .post(auth, validate(journalValidation.createTradeEntryStepByStep), journalController.createTradeEntryStepByStep);
+
+router
+  .route('/trades/:tradeId/step/:stepNumber')
+  .put(auth, validate(journalValidation.updateTradeEntryStepParams, 'params'), validate(journalValidation.updateTradeEntryStepBody), journalController.updateTradeEntryStep);
+
+// Additional step-by-step routes
+router
+  .route('/trades/incomplete')
+  .get(auth, validate(journalValidation.getIncompleteTradeEntriesQuery, 'query'), journalController.getIncompleteTradeEntries);
+
+router
+  .route('/stats/completion')
+  .get(auth, journalController.getCompletionStats);
+
 // User Custom Tag routes
 router
   .route('/tags')

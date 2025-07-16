@@ -321,6 +321,44 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING,
       field: 'external_analysis_link',
     },
+    // Step completion tracking fields
+    stepCompletionStatus: {
+      type: DataTypes.JSON,
+      field: 'step_completion_status',
+      defaultValue: {
+        0: false, // Pre-Trade Plan
+        1: false, // Execution & Entry
+        2: false, // Exit & Performance
+        3: false, // Outcome Review
+        4: false, // Psychology Review
+        5: false  // Analysis & Learning
+      },
+    },
+    currentStep: {
+      type: DataTypes.INTEGER,
+      field: 'current_step',
+      defaultValue: 0,
+    },
+    completedSteps: {
+      type: DataTypes.INTEGER,
+      field: 'completed_steps',
+      defaultValue: 0,
+    },
+    isComplete: {
+      type: DataTypes.BOOLEAN,
+      field: 'is_complete',
+      defaultValue: false,
+    },
+    lastUpdatedStep: {
+      type: DataTypes.INTEGER,
+      field: 'last_updated_step',
+      defaultValue: 0,
+    },
+    stepTimestamps: {
+      type: DataTypes.JSON,
+      field: 'step_timestamps',
+      defaultValue: {},
+    },
     createdAt: {
       type: DataTypes.DATE,
       field: 'created_at',

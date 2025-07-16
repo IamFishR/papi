@@ -110,6 +110,52 @@ const deleteUserCustomTag = catchAsync(async (req, res) => {
   return apiResponse.success(res, 200, successMessages.DELETED);
 });
 
+/**
+ * Create a new trade journal entry (step-by-step version)
+ */
+const createTradeEntryStepByStep = catchAsync(async (req, res) => {
+  const { initialStep = 0 } = req.body;
+  const tradeEntry = await journalService.createTradeEntryStepByStep(req.user.id, req.body, initialStep);
+  return apiResponse.success(res, 201, successMessages.CREATED, tradeEntry);
+});
+
+/**
+ * Update a specific step of a trade journal entry
+ */
+const updateTradeEntryStep = catchAsync(async (req, res) => {
+  const { tradeId, stepNumber } = req.params;
+  const stepNum = parseInt(stepNumber);
+  
+  if (isNaN(stepNum) || stepNum < 0 || stepNum > 5) {
+    return apiResponse.error(res, 400, 'Invalid step number. Must be between 0 and 5.');
+  }
+  
+  const tradeEntry = await journalService.updateTradeEntryStep(tradeId, req.user.id, stepNum, req.body);
+  return apiResponse.success(res, 200, successMessages.UPDATED, tradeEntry);
+});
+
+/**
+ * Get incomplete trades for a user
+ */
+const getIncompleteTradeEntries = catchAsync(async (req, res) => {
+  const options = {
+    sortBy: req.query.sortBy || 'updatedAt:desc',
+    limit: parseInt(req.query.limit) || 10,
+    page: parseInt(req.query.page) || 1,
+  };
+  
+  const result = await journalService.getIncompleteTradeEntries(req.user.id, options);
+  return apiResponse.success(res, 200, successMessages.FETCHED, result);
+});
+
+/**
+ * Get completion statistics for a user
+ */
+const getCompletionStats = catchAsync(async (req, res) => {
+  const stats = await journalService.getCompletionStats(req.user.id);
+  return apiResponse.success(res, 200, successMessages.FETCHED, stats);
+});
+
 module.exports = {
   createTradeEntry,
   getTradeEntries,
@@ -120,4 +166,9 @@ module.exports = {
   createUserCustomTag,
   updateUserCustomTag,
   deleteUserCustomTag,
+  // New step-by-step functions
+  createTradeEntryStepByStep,
+  updateTradeEntryStep,
+  getIncompleteTradeEntries,
+  getCompletionStats,
 };

@@ -211,8 +211,18 @@ const bulkUpdatePrices = catchAsync(async (req, res) => {
  * @admin
  */
 const completeMarketData = catchAsync(async (req, res) => {
-  // const { stockInfo, priceInfo, preMarketData, preMarketOrders, valuationMetrics, indexMemberships, industryInfo } = req.body;
-
+  const logger = require('../../../config/logger');
+  
+  logger.info('Complete market data endpoint called', {
+    requestBodyKeys: Object.keys(req.body),
+    requestBodySize: JSON.stringify(req.body).length,
+    endpoint: '/api/v1/stocks/complete-market-data'
+  });
+  
+  logger.debug('Complete market data request body', {
+    requestBody: req.body
+  });
+  
   const result = await stockService.processCompleteMarketData(req.body);
 
   return apiResponse.success(

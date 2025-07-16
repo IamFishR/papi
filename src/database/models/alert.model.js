@@ -118,7 +118,7 @@ module.exports = (sequelize) => {
     },
     notificationMethodId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true, // Made optional to simplify alerts
       field: 'notification_method_id',
       references: {
         model: 'st_notification_methods',

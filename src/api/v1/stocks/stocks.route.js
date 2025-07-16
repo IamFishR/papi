@@ -45,8 +45,8 @@ router.post(
   '/complete-market-data',
   authenticate,
   authorize('admin'),
-  validate(stocksValidation.completeMarketData.body),
   payloadTransformer(createTransformerForEndpoint('/complete-market-data')),
+  validate(stocksValidation.completeMarketData.body),
   catchAsync(stocksController.completeMarketData)
 );
 
