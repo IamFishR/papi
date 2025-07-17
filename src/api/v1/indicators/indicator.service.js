@@ -9,13 +9,13 @@ const db = require('../../../database/models');
 
 /**
  * Calculate and store RSI (Relative Strength Index)
- * @param {number} stockId - Stock ID
+ * @param {number} stock_id - Stock ID
  * @param {number} period - Period length (default: 14)
  * @returns {Promise<Object>} Calculated RSI indicator
  */
-const calculateRSI = async (stockId, period = 14) => {
+const calculateRSI = async (stock_id, period = 14) => {
   // Verify stock exists
-  const stock = await db.Stock.findByPk(stockId);
+  const stock = await db.Stock.findByPk(stock_id);
   
   if (!stock) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Stock not found');
@@ -32,9 +32,9 @@ const calculateRSI = async (stockId, period = 14) => {
 
   // Get historical prices for calculation
   const prices = await db.StockPrice.findAll({
-    where: { stockId },
-    attributes: ['priceDate', 'closePrice'],
-    order: [['priceDate', 'ASC']],
+    where: { stock_id: stock_id },
+    attributes: ['price_date', 'close_price'],
+    order: [['price_date', 'ASC']],
     limit: period * 2 + 10 // Get enough data for calculation
   });
   
@@ -47,9 +47,9 @@ const calculateRSI = async (stockId, period = 14) => {
   
   // Store the calculated indicator
   const technicalIndicator = await db.TechnicalIndicator.create({
-    stockId,
+    stockId: stock_id,
     indicatorTypeId: indicatorType.id,
-    periodLength: period,
+    timePeriod: period,
     value: rsiValue,
     calculationDate: new Date()
   });
@@ -59,7 +59,7 @@ const calculateRSI = async (stockId, period = 14) => {
 
 /**
  * Calculate RSI value from price data
- * @param {Array} prices - Array of price objects with closePrice
+ * @param {Array} prices - Array of price objects with close_price
  * @param {number} period - Period length
  * @returns {number} RSI value
  */
@@ -69,7 +69,7 @@ const calculateRSIValue = (prices, period) => {
   
   // Calculate price changes
   for (let i = 1; i < prices.length; i++) {
-    const change = prices[i].closePrice - prices[i-1].closePrice;
+    const change = prices[i].close_price - prices[i-1].close_price;
     gains.push(change > 0 ? change : 0);
     losses.push(change < 0 ? Math.abs(change) : 0);
     
@@ -99,13 +99,13 @@ const calculateRSIValue = (prices, period) => {
 
 /**
  * Calculate and store SMA (Simple Moving Average)
- * @param {number} stockId - Stock ID
+ * @param {number} stock_id - Stock ID
  * @param {number} period - Period length (default: 20)
  * @returns {Promise<Object>} Calculated SMA indicator
  */
-const calculateSMA = async (stockId, period = 20) => {
+const calculateSMA = async (stock_id, period = 20) => {
   // Verify stock exists
-  const stock = await db.Stock.findByPk(stockId);
+  const stock = await db.Stock.findByPk(stock_id);
   
   if (!stock) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Stock not found');
@@ -122,9 +122,9 @@ const calculateSMA = async (stockId, period = 20) => {
 
   // Get historical prices for calculation
   const prices = await db.StockPrice.findAll({
-    where: { stockId },
-    attributes: ['priceDate', 'closePrice'],
-    order: [['priceDate', 'ASC']],
+    where: { stock_id },
+    attributes: ['price_date', 'close_price'],
+    order: [['price_date', 'ASC']],
     limit: period + 10 // Get enough data for calculation
   });
   
@@ -137,9 +137,9 @@ const calculateSMA = async (stockId, period = 20) => {
   
   // Store the calculated indicator
   const technicalIndicator = await db.TechnicalIndicator.create({
-    stockId,
+    stockId: stock_id,
     indicatorTypeId: indicatorType.id,
-    periodLength: period,
+    timePeriod: period,
     value: smaValue,
     calculationDate: new Date()
   });
@@ -149,7 +149,7 @@ const calculateSMA = async (stockId, period = 20) => {
 
 /**
  * Calculate SMA value from price data
- * @param {Array} prices - Array of price objects with closePrice
+ * @param {Array} prices - Array of price objects with close_price
  * @param {number} period - Period length
  * @returns {number} SMA value
  */
@@ -159,7 +159,7 @@ const calculateSMAValue = (prices, period) => {
   }
   
   const pricesForCalculation = prices.slice(-period);
-  const sum = pricesForCalculation.reduce((total, price) => total + price.closePrice, 0);
+  const sum = pricesForCalculation.reduce((total, price) => total + price.close_price, 0);
   const sma = sum / period;
   
   return parseFloat(sma.toFixed(2));
@@ -167,13 +167,13 @@ const calculateSMAValue = (prices, period) => {
 
 /**
  * Calculate and store EMA (Exponential Moving Average)
- * @param {number} stockId - Stock ID
+ * @param {number} stock_id - Stock ID
  * @param {number} period - Period length (default: 20)
  * @returns {Promise<Object>} Calculated EMA indicator
  */
-const calculateEMA = async (stockId, period = 20) => {
+const calculateEMA = async (stock_id, period = 20) => {
   // Verify stock exists
-  const stock = await db.Stock.findByPk(stockId);
+  const stock = await db.Stock.findByPk(stock_id);
   
   if (!stock) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Stock not found');
@@ -190,9 +190,9 @@ const calculateEMA = async (stockId, period = 20) => {
 
   // Get historical prices for calculation
   const prices = await db.StockPrice.findAll({
-    where: { stockId },
-    attributes: ['priceDate', 'closePrice'],
-    order: [['priceDate', 'ASC']],
+    where: { stock_id },
+    attributes: ['price_date', 'close_price'],
+    order: [['price_date', 'ASC']],
     limit: period * 3 // Get enough data for calculation
   });
   
@@ -205,9 +205,9 @@ const calculateEMA = async (stockId, period = 20) => {
   
   // Store the calculated indicator
   const technicalIndicator = await db.TechnicalIndicator.create({
-    stockId,
+    stockId: stock_id,
     indicatorTypeId: indicatorType.id,
-    periodLength: period,
+    timePeriod: period,
     value: emaValue,
     calculationDate: new Date()
   });
@@ -217,7 +217,7 @@ const calculateEMA = async (stockId, period = 20) => {
 
 /**
  * Calculate EMA value from price data
- * @param {Array} prices - Array of price objects with closePrice
+ * @param {Array} prices - Array of price objects with close_price
  * @param {number} period - Period length
  * @returns {number} EMA value
  */
@@ -236,7 +236,7 @@ const calculateEMAValue = (prices, period) => {
   let ema = sma;
   
   for (let i = period; i < prices.length; i++) {
-    ema = (prices[i].closePrice - ema) * multiplier + ema;
+    ema = (prices[i].close_price - ema) * multiplier + ema;
   }
   
   return parseFloat(ema.toFixed(2));
@@ -244,15 +244,15 @@ const calculateEMAValue = (prices, period) => {
 
 /**
  * Calculate and store MACD (Moving Average Convergence Divergence)
- * @param {number} stockId - Stock ID
+ * @param {number} stock_id - Stock ID
  * @param {number} fastPeriod - Fast period (default: 12)
  * @param {number} slowPeriod - Slow period (default: 26)
  * @param {number} signalPeriod - Signal period (default: 9)
  * @returns {Promise<Object>} Calculated MACD indicator
  */
-const calculateMACD = async (stockId, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9) => {
+const calculateMACD = async (stock_id, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9) => {
   // Verify stock exists
-  const stock = await db.Stock.findByPk(stockId);
+  const stock = await db.Stock.findByPk(stock_id);
   
   if (!stock) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Stock not found');
@@ -269,9 +269,9 @@ const calculateMACD = async (stockId, fastPeriod = 12, slowPeriod = 26, signalPe
 
   // Get historical prices for calculation
   const prices = await db.StockPrice.findAll({
-    where: { stockId },
-    attributes: ['priceDate', 'closePrice'],
-    order: [['priceDate', 'ASC']],
+    where: { stock_id },
+    attributes: ['price_date', 'close_price'],
+    order: [['price_date', 'ASC']],
     limit: slowPeriod + signalPeriod + 10 // Get enough data for calculation
   });
   
@@ -284,16 +284,16 @@ const calculateMACD = async (stockId, fastPeriod = 12, slowPeriod = 26, signalPe
   
   // Store the calculated indicator
   const technicalIndicator = await db.TechnicalIndicator.create({
-    stockId,
+    stockId: stock_id,
     indicatorTypeId: indicatorType.id,
-    periodLength: fastPeriod, // Store the fast period as the main period
+    timePeriod: fastPeriod, // Store the fast period as the main period
     value: macdValue,
     calculationDate: new Date(),
-    additionalData: JSON.stringify({
+    parameters: {
       fastPeriod,
       slowPeriod,
       signalPeriod
-    })
+    }
   });
 
   return technicalIndicator;
@@ -301,7 +301,7 @@ const calculateMACD = async (stockId, fastPeriod = 12, slowPeriod = 26, signalPe
 
 /**
  * Calculate MACD value from price data
- * @param {Array} prices - Array of price objects with closePrice
+ * @param {Array} prices - Array of price objects with close_price
  * @param {number} fastPeriod - Fast period
  * @param {number} slowPeriod - Slow period
  * @param {number} signalPeriod - Signal period
@@ -322,7 +322,7 @@ const calculateMACDValue = (prices, fastPeriod, slowPeriod, signalPeriod) => {
 
 /**
  * Helper function to calculate EMA from an array of prices
- * @param {Array} prices - Array of price objects with closePrice
+ * @param {Array} prices - Array of price objects with close_price
  * @param {number} period - Period length
  * @returns {number} EMA value
  */
@@ -334,7 +334,7 @@ const calculateEMAFromPrices = (prices, period) => {
   // Calculate SMA for the first EMA value
   let sum = 0;
   for (let i = 0; i < period; i++) {
-    sum += prices[i].closePrice;
+    sum += prices[i].close_price;
   }
   let sma = sum / period;
   
@@ -345,7 +345,7 @@ const calculateEMAFromPrices = (prices, period) => {
   let ema = sma;
   
   for (let i = period; i < prices.length; i++) {
-    ema = (prices[i].closePrice - ema) * multiplier + ema;
+    ema = (prices[i].close_price - ema) * multiplier + ema;
   }
   
   return ema;
@@ -353,14 +353,14 @@ const calculateEMAFromPrices = (prices, period) => {
 
 /**
  * Calculate and store Bollinger Bands
- * @param {number} stockId - Stock ID
+ * @param {number} stock_id - Stock ID
  * @param {number} period - Period length (default: 20)
  * @param {number} standardDeviations - Number of standard deviations (default: 2)
  * @returns {Promise<Object>} Calculated Bollinger Bands indicator
  */
-const calculateBollingerBands = async (stockId, period = 20, standardDeviations = 2) => {
+const calculateBollingerBands = async (stock_id, period = 20, standardDeviations = 2) => {
   // Verify stock exists
-  const stock = await db.Stock.findByPk(stockId);
+  const stock = await db.Stock.findByPk(stock_id);
   
   if (!stock) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Stock not found');
@@ -377,9 +377,9 @@ const calculateBollingerBands = async (stockId, period = 20, standardDeviations 
 
   // Get historical prices for calculation
   const prices = await db.StockPrice.findAll({
-    where: { stockId },
-    attributes: ['priceDate', 'closePrice'],
-    order: [['priceDate', 'ASC']],
+    where: { stock_id },
+    attributes: ['price_date', 'close_price'],
+    order: [['price_date', 'ASC']],
     limit: period + 10 // Get enough data for calculation
   });
   
@@ -392,16 +392,16 @@ const calculateBollingerBands = async (stockId, period = 20, standardDeviations 
   
   // Store the calculated indicator
   const technicalIndicator = await db.TechnicalIndicator.create({
-    stockId,
+    stockId: stock_id,
     indicatorTypeId: indicatorType.id,
-    periodLength: period,
+    timePeriod: period,
     value: middle, // Store the middle band as the main value
     calculationDate: new Date(),
-    additionalData: JSON.stringify({
+    parameters: {
       upper,
       lower,
       standardDeviations
-    })
+    }
   });
 
   return technicalIndicator;
@@ -409,7 +409,7 @@ const calculateBollingerBands = async (stockId, period = 20, standardDeviations 
 
 /**
  * Calculate Bollinger Bands value from price data
- * @param {Array} prices - Array of price objects with closePrice
+ * @param {Array} prices - Array of price objects with close_price
  * @param {number} period - Period length
  * @param {number} standardDeviations - Number of standard deviations
  * @returns {Object} Bollinger Bands values (middle, upper, lower)
@@ -425,13 +425,13 @@ const calculateBollingerBandsValue = (prices, period, standardDeviations) => {
   
   // Calculate SMA (middle band)
   const pricesForCalculation = prices.slice(-period);
-  const closePrices = pricesForCalculation.map(price => price.closePrice);
+  const close_prices = pricesForCalculation.map(price => price.close_price);
   
-  const sum = closePrices.reduce((total, price) => total + price, 0);
+  const sum = close_prices.reduce((total, price) => total + price, 0);
   const middle = sum / period;
   
   // Calculate standard deviation
-  const squaredDifferences = closePrices.map(price => Math.pow(price - middle, 2));
+  const squaredDifferences = close_prices.map(price => Math.pow(price - middle, 2));
   const variance = squaredDifferences.reduce((total, diff) => total + diff, 0) / period;
   const standardDeviation = Math.sqrt(variance);
   

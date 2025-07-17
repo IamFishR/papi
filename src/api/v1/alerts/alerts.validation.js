@@ -72,6 +72,20 @@ const createAlert = {
       otherwise: Joi.optional()
     }),
     
+    // Cross-indicator comparison fields
+    compare_indicator_type_id: Joi.number().integer().when('indicator_condition_id', {
+      is: Joi.number().valid(3, 4), // crossover or crossunder
+      then: Joi.required(),
+      otherwise: Joi.optional()
+    }),
+    compare_indicator_period: Joi.number().integer().min(1).max(200).default(20),
+    
+    // Multiple indicator conditions (AND/OR logic)
+    secondary_indicator_type_id: Joi.number().integer(),
+    secondary_indicator_period: Joi.number().integer().min(1).max(200).default(14),
+    secondary_indicator_threshold: Joi.number().precision(4),
+    secondary_indicator_condition_id: Joi.number().integer(),
+    
     // News alert fields - required if trigger_type is 'news'
     news_keywords: Joi.string().when('triggerTypeId', {
       is: 4, // news trigger type ID

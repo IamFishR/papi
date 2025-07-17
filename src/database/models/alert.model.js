@@ -89,6 +89,61 @@ module.exports = (sequelize) => {
         key: 'id',
       },
     },
+    indicatorPeriod: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'indicator_period',
+      defaultValue: 14,
+    },
+    indicatorThreshold: {
+      type: DataTypes.DECIMAL(12, 4),
+      allowNull: true,
+      field: 'indicator_threshold',
+    },
+    compareIndicatorTypeId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'compare_indicator_type_id',
+      references: {
+        model: 'st_indicator_types',
+        key: 'id',
+      },
+    },
+    compareIndicatorPeriod: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'compare_indicator_period',
+      defaultValue: 20,
+    },
+    secondaryIndicatorTypeId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'secondary_indicator_type_id',
+      references: {
+        model: 'st_indicator_types',
+        key: 'id',
+      },
+    },
+    secondaryIndicatorPeriod: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'secondary_indicator_period',
+      defaultValue: 14,
+    },
+    secondaryIndicatorThreshold: {
+      type: DataTypes.DECIMAL(12, 4),
+      allowNull: true,
+      field: 'secondary_indicator_threshold',
+    },
+    secondaryIndicatorConditionId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'secondary_indicator_condition_id',
+      references: {
+        model: 'st_indicator_conditions',
+        key: 'id',
+      },
+    },
     sentimentTypeId: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -277,6 +332,24 @@ module.exports = (sequelize) => {
     Alert.belongsTo(models.IndicatorCondition, {
       foreignKey: 'indicator_condition_id',
       as: 'indicatorCondition',
+    });
+
+    // Alert belongs to a compare indicator type (for cross-indicator comparisons)
+    Alert.belongsTo(models.IndicatorType, {
+      foreignKey: 'compare_indicator_type_id',
+      as: 'compareIndicatorType',
+    });
+
+    // Alert belongs to a secondary indicator type (for multi-condition alerts)
+    Alert.belongsTo(models.IndicatorType, {
+      foreignKey: 'secondary_indicator_type_id',
+      as: 'secondaryIndicatorType',
+    });
+
+    // Alert belongs to a secondary indicator condition
+    Alert.belongsTo(models.IndicatorCondition, {
+      foreignKey: 'secondary_indicator_condition_id',
+      as: 'secondaryIndicatorCondition',
     });
 
     // Alert belongs to a sentiment type

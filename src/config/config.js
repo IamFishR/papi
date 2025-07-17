@@ -14,6 +14,19 @@ module.exports = {
   
   // Database configuration
   db: {
+    // Neon configuration
+    neonConnectionString: process.env.NEON_STRING,
+    useNeon: process.env.USE_NEON === 'true',
+    
+    // Local configuration
+    localHost: process.env.LOCAL_DB_HOST || 'localhost',
+    localPort: process.env.LOCAL_DB_PORT || 3306,
+    localName: process.env.LOCAL_DB_NAME || 'papi_db',
+    localUser: process.env.LOCAL_DB_USER || 'root',
+    localPassword: process.env.LOCAL_DB_PASSWORD || '',
+    localDialect: process.env.LOCAL_DB_DIALECT || 'mysql',
+    
+    // Legacy configuration (kept for backward compatibility)
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 3306,
     name: process.env.DB_NAME || 'papi_db',

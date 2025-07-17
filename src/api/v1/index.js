@@ -14,6 +14,7 @@ const alertsRoutes = require('./alerts/alerts.route');
 const watchlistsRoutes = require('./watchlists/watchlists.route');
 const notificationsRoutes = require('./notifications/notifications.route');
 const referenceRoutes = require('./reference/reference.route');
+const indicatorsRoutes = require('./indicators/indicators.route');
 
 // System management routes
 const systemRoutes = require('./system/system.route');
@@ -33,6 +34,7 @@ router.use('/alerts', alertsRoutes);
 router.use('/watchlists', watchlistsRoutes);
 router.use('/notifications', notificationsRoutes);
 router.use('/reference', referenceRoutes);
+router.use('/indicators', indicatorsRoutes);
 
 // Register system management routes
 router.use('/system', systemRoutes);

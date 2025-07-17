@@ -13,21 +13,35 @@ const env = process.env.NODE_ENV || 'development';
 const dbConfig = config[env];
 
 // Create Sequelize instance
-const sequelize = new Sequelize(
-  dbConfig.database,
-  dbConfig.username,
-  dbConfig.password,
-  {
-    host: dbConfig.host,
-    port: dbConfig.port,
+let sequelize;
+if (dbConfig.use_env_variable) {
+  // Use connection string from environment variable
+  sequelize = new Sequelize(process.env[dbConfig.use_env_variable], {
     dialect: dbConfig.dialect,
     logging: dbConfig.logging,
     timezone: dbConfig.timezone,
     define: dbConfig.define,
     pool: dbConfig.pool,
     dialectOptions: dbConfig.dialectOptions,
-  }
-);
+  });
+} else {
+  // Use individual connection parameters
+  sequelize = new Sequelize(
+    dbConfig.database,
+    dbConfig.username,
+    dbConfig.password,
+    {
+      host: dbConfig.host,
+      port: dbConfig.port,
+      dialect: dbConfig.dialect,
+      logging: dbConfig.logging,
+      timezone: dbConfig.timezone,
+      define: dbConfig.define,
+      pool: dbConfig.pool,
+      dialectOptions: dbConfig.dialectOptions,
+    }
+  );
+}
 
 // Test database connection
 sequelize

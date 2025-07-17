@@ -42,7 +42,7 @@ const getStockPrices = {
   query: Joi.object().keys({
     from: Joi.date().iso(),
     to: Joi.date().iso().min(Joi.ref('from')),
-    interval: Joi.string().valid('day', 'week', 'month').default('day'),
+    interval: Joi.string().valid('daily', 'weekly', 'monthly').default('daily'),
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(1000).default(100),
   }),
