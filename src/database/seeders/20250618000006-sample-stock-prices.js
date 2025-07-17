@@ -31,18 +31,20 @@ module.exports = {
     const symbols = Object.keys(stockMap);
     const today = moment().startOf('day');
     
-    // Base prices for each stock (approximate current values)
+    // Base prices for each stock (approximate current values in INR)
     const basePrices = {
-      'AAPL': 190.0,
-      'MSFT': 330.0,
-      'GOOGL': 135.0,
-      'AMZN': 175.0,
-      'TSLA': 250.0,
-      'JPM': 180.0,
-      'JNJ': 155.0,
-      'V': 265.0,
-      'PG': 160.0,
-      'NVDA': 450.0
+      'RELIANCE': 2500.0,
+      'TCS': 3800.0,
+      'HDFCBANK': 1600.0,
+      'INFY': 1450.0,
+      'HINDUNILVR': 2700.0,
+      'ICICIBANK': 1200.0,
+      'BHARTIARTL': 950.0,
+      'KOTAKBANK': 1800.0,
+      'LT': 3200.0,
+      'HCLTECH': 1250.0,
+      'MARUTI': 10500.0,
+      'SBIN': 820.0
     };
     
     // Generate 30 days of price data for each stock

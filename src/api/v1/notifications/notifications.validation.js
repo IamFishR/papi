@@ -24,7 +24,10 @@ const listNotifications = {
  */
 const acknowledgeNotification = {
   params: Joi.object().keys({
-    id: Joi.string().uuid().required(),
+    id: Joi.alternatives().try(
+      Joi.string().uuid(),
+      Joi.string().pattern(/^\d+$/).message('id must be a valid number or GUID')
+    ).required(),
   }),
 };
 

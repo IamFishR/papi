@@ -23,6 +23,19 @@ const getNotifications = async (filter, options) => {
   const whereConditions = { 
     userId 
   };
+
+  // Exclude acknowledged notifications unless specifically requested
+  if (!filter.includeAcknowledged) {
+    const acknowledgedStatus = await db.AlertStatus.findOne({
+      where: { name: 'acknowledged' }
+    });
+    
+    if (acknowledgedStatus) {
+      whereConditions.statusId = {
+        [Op.ne]: acknowledgedStatus.id
+      };
+    }
+  }
   
   // Add date filters if provided
   if (filter.from || filter.to) {
@@ -58,6 +71,11 @@ const getNotifications = async (filter, options) => {
     ]
   });
 
+  // Get acknowledged status for comparison
+  const acknowledgedStatus = await db.AlertStatus.findOne({
+    where: { name: 'acknowledged' }
+  });
+
   // Transform alert history into notification format expected by frontend
   const notifications = rows.map(history => ({
     id: history.id,
@@ -67,8 +85,9 @@ const getNotifications = async (filter, options) => {
     subject: `${history.alert?.name || 'Stock Alert'} - ${history.stock?.symbol}`,
     message: formatAlertMessage(history),
     scheduled_time: history.triggeredAt,
-    status: 'pending', // All alert history notifications are treated as pending
-    method: 'push' // Default method for frontend
+    status: history.statusId === acknowledgedStatus?.id ? 'acknowledged' : 'pending',
+    method: 'push', // Default method for frontend
+    acknowledged: history.statusId === acknowledgedStatus?.id
   }));
 
   // Return paginated result
@@ -104,16 +123,24 @@ const formatAlertMessage = (history) => {
 };
 
 /**
- * Acknowledge a notification (simplified for alert history)
- * @param {number} id - Alert History ID
+ * Acknowledge a notification (update alert history status)
+ * @param {string|number} id - Alert History ID
  * @param {string} userId - User ID
  * @returns {Promise<Object>} Success response
  */
 const acknowledgeNotification = async (id, userId) => {
+  // Convert id to number if it's a string
+  const alertHistoryId = typeof id === 'string' ? parseInt(id, 10) : id;
+  
+  // Validate the converted ID
+  if (isNaN(alertHistoryId)) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid notification ID');
+  }
+  
   // Find alert history record by ID and userId
   const alertHistory = await db.AlertHistory.findOne({
     where: {
-      id,
+      id: alertHistoryId,
       userId
     }
   });
@@ -122,14 +149,25 @@ const acknowledgeNotification = async (id, userId) => {
     throw new ApiError(StatusCodes.NOT_FOUND, 'Notification not found');
   }
 
-  // For the simplified system, we just mark it as acknowledged
-  // In the future, we could add an acknowledged field to AlertHistory
-  // For now, we'll just return success
+  // Find the 'acknowledged' alert status
+  const acknowledgedStatus = await db.AlertStatus.findOne({
+    where: { name: 'acknowledged' }
+  });
+
+  if (!acknowledgedStatus) {
+    throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Acknowledged status not found');
+  }
+
+  // Update the alert history status to acknowledged
+  await alertHistory.update({
+    statusId: acknowledgedStatus.id
+  });
   
   return {
     id: alertHistory.id,
     acknowledged: true,
-    acknowledgedAt: new Date()
+    acknowledgedAt: new Date(),
+    statusId: acknowledgedStatus.id
   };
 };
 
