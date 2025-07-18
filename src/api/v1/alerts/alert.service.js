@@ -588,7 +588,7 @@ const checkIndicatorAlertConditions = async (alert) => {
     where: { 
       stockId: alert.stockId,
       indicatorTypeId: alert.indicatorTypeId,
-      periodLength: alert.indicatorPeriod || 14
+      timePeriod: alert.indicatorPeriod || 14
     },
     order: [['calculation_date', 'DESC']]
   });
@@ -614,7 +614,7 @@ const checkIndicatorAlertConditions = async (alert) => {
         where: { 
           stockId: alert.stockId,
           indicatorTypeId: alert.indicatorTypeId,
-          periodLength: alert.indicatorPeriod || 14,
+          timePeriod: alert.indicatorPeriod || 14,
           calculation_date: { [Op.lt]: latestIndicator.calculationDate }
         },
         order: [['calculation_date', 'DESC']]
@@ -632,7 +632,7 @@ const checkIndicatorAlertConditions = async (alert) => {
         where: { 
           stockId: alert.stockId,
           indicatorTypeId: alert.indicatorTypeId,
-          periodLength: alert.indicatorPeriod || 14,
+          timePeriod: alert.indicatorPeriod || 14,
           calculation_date: { [Op.lt]: latestIndicator.calculationDate }
         },
         order: [['calculation_date', 'DESC']]
@@ -894,26 +894,45 @@ const getPriorityLevelId = async (levelName) => {
 };
 
 /**
- * Process all active alerts - called by scheduler
+ * Process all active alerts (all types: price, volume, technical indicators, news) - called by scheduler
  * @returns {Promise<void>}
  */
 const processAllAlerts = async () => {
   try {
-    // Get all active price alerts
+    // Get all active alerts (all types, not just price alerts)
     const alerts = await db.Alert.findAll({
       where: {
-        isActive: true,
-        triggerTypeId: 1 // Price alerts
+        isActive: true
       },
       include: [
         {
           model: db.Stock,
           as: 'stock',
-          attributes: ['id', 'symbol', 'companyName'] // Changed 'name' to 'companyName'
+          attributes: ['id', 'symbol', 'companyName']
         },
         {
           model: db.ThresholdCondition,
           as: 'thresholdCondition',
+          attributes: ['id', 'name']
+        },
+        {
+          model: db.VolumeCondition,
+          as: 'volumeCondition',
+          attributes: ['id', 'name']
+        },
+        {
+          model: db.IndicatorType,
+          as: 'indicatorType',
+          attributes: ['id', 'name']
+        },
+        {
+          model: db.IndicatorCondition,
+          as: 'indicatorCondition',
+          attributes: ['id', 'name']
+        },
+        {
+          model: db.SentimentType,
+          as: 'sentimentType',
           attributes: ['id', 'name']
         },
         {
@@ -922,16 +941,24 @@ const processAllAlerts = async () => {
           attributes: ['id', 'name']
         }
       ],
-      // Add attributes option to explicitly select only the columns we need
+      // Include all necessary attributes for different alert types
       attributes: [
         'id', 'userId', 'stockId', 'triggerTypeId', 'name', 'description',
         'priceThreshold', 'thresholdConditionId', 'isActive', 'lastTriggered',
         'baselinePrice', 'baselineTimestamp', 'marketHoursOnly', 'volumeConfirmation',
-        'cooldownMinutes'
+        'cooldownMinutes',
+        // Technical indicator fields
+        'indicatorTypeId', 'indicatorPeriod', 'indicatorThreshold', 'indicatorConditionId',
+        'compareIndicatorTypeId', 'compareIndicatorPeriod',
+        'secondaryIndicatorTypeId', 'secondaryIndicatorPeriod', 'secondaryIndicatorThreshold', 'secondaryIndicatorConditionId',
+        // Volume alert fields
+        'volumeConditionId',
+        // News alert fields
+        'sentimentTypeId'
       ]
     });
 
-    logger.info(`Processing ${alerts.length} active alerts`);
+    logger.info(`Processing ${alerts.length} active alerts (all types)`);
 
     // Process each alert
     for (const alert of alerts) {

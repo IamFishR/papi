@@ -29,9 +29,14 @@ const format = config.env === 'development'
 // Create Morgan middleware using Winston for logging
 const requestLogger = morgan(format, {
   stream: logger.stream,
-  skip: (req) => {
+  skip: (req, res) => {
     // Skip logging for health check and static assets
-    return req.url.includes('/health') || req.url.includes('/public');
+    if (req.url.includes('/health') || req.url.includes('/public')) {
+      return true;
+    }
+    
+    // Only log failures (4xx and 5xx status codes)
+    return res.statusCode < 400;
   },
 });
 

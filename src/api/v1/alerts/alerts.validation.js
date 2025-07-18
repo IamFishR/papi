@@ -54,37 +54,33 @@ const createAlert = {
       otherwise: Joi.optional()
     }),
     
-    // Technical indicator fields - required if trigger_type is 'technical_indicator'
-    indicator_type_id: Joi.number().integer().when('triggerTypeId', {
+    // Technical indicator fields - required if trigger_type is 'technical_indicator' (camelCase from frontend)
+    indicatorTypeId: Joi.number().integer().when('triggerTypeId', {
       is: 3, // technical_indicator trigger type ID
       then: Joi.required(),
       otherwise: Joi.optional()
     }),
-    indicator_period: Joi.number().integer().min(1).max(200).default(14),
-    indicator_threshold: Joi.number().precision(4).when('triggerTypeId', {
-      is: 3, // technical_indicator trigger type ID
-      then: Joi.required(),
-      otherwise: Joi.optional()
-    }),
-    indicator_condition_id: Joi.number().integer().when('triggerTypeId', {
+    indicatorPeriod: Joi.number().integer().min(1).max(200).default(14),
+    indicatorThreshold: Joi.number().precision(4).optional(), // Fixed: made optional
+    indicatorConditionId: Joi.number().integer().when('triggerTypeId', {
       is: 3, // technical_indicator trigger type ID
       then: Joi.required(),
       otherwise: Joi.optional()
     }),
     
-    // Cross-indicator comparison fields
-    compare_indicator_type_id: Joi.number().integer().when('indicator_condition_id', {
+    // Cross-indicator comparison fields (camelCase from frontend)
+    compareIndicatorTypeId: Joi.number().integer().when('indicatorConditionId', {
       is: Joi.number().valid(3, 4), // crossover or crossunder
       then: Joi.required(),
       otherwise: Joi.optional()
     }),
-    compare_indicator_period: Joi.number().integer().min(1).max(200).default(20),
+    compareIndicatorPeriod: Joi.number().integer().min(1).max(200).default(20),
     
-    // Multiple indicator conditions (AND/OR logic)
-    secondary_indicator_type_id: Joi.number().integer(),
-    secondary_indicator_period: Joi.number().integer().min(1).max(200).default(14),
-    secondary_indicator_threshold: Joi.number().precision(4),
-    secondary_indicator_condition_id: Joi.number().integer(),
+    // Multiple indicator conditions (AND/OR logic) (camelCase from frontend)
+    secondaryIndicatorTypeId: Joi.number().integer().optional(),
+    secondaryIndicatorPeriod: Joi.number().integer().min(1).max(200).default(14),
+    secondaryIndicatorThreshold: Joi.number().precision(4).optional(),
+    secondaryIndicatorConditionId: Joi.number().integer().optional(),
     
     // News alert fields - required if trigger_type is 'news'
     news_keywords: Joi.string().when('triggerTypeId', {
@@ -109,8 +105,8 @@ const createAlert = {
     priorityId: Joi.number().integer().default(2),
     startDate: Joi.date().default(new Date()),
     
-    // Conditional logic for multi-condition alerts
-    condition_logic_id: Joi.number().integer(),
+    // Conditional logic for multi-condition alerts (camelCase from frontend)
+    conditionLogicId: Joi.number().integer().allow(null).optional(),
     parent_alert_id: Joi.number().integer().positive().allow(null),
     
     // Scheduling
@@ -168,11 +164,21 @@ const updateAlert = {
     volume_threshold: Joi.number(),
     volume_condition_id: Joi.number().integer(),
     
-    // Technical indicator fields
-    indicator_type_id: Joi.number().integer(),
-    indicator_period: Joi.number().integer().min(1).max(200),
-    indicator_threshold: Joi.number().precision(4),
-    indicator_condition_id: Joi.number().integer(),
+    // Technical indicator fields (camelCase from frontend)
+    indicatorTypeId: Joi.number().integer(),
+    indicatorPeriod: Joi.number().integer().min(1).max(200),
+    indicatorThreshold: Joi.number().precision(4),
+    indicatorConditionId: Joi.number().integer(),
+    
+    // Cross-indicator comparison fields (camelCase from frontend)
+    compareIndicatorTypeId: Joi.number().integer(),
+    compareIndicatorPeriod: Joi.number().integer().min(1).max(200),
+    
+    // Multiple indicator conditions (camelCase from frontend)
+    secondaryIndicatorTypeId: Joi.number().integer(),
+    secondaryIndicatorPeriod: Joi.number().integer().min(1).max(200),
+    secondaryIndicatorThreshold: Joi.number().precision(4),
+    secondaryIndicatorConditionId: Joi.number().integer(),
     
     // News alert fields
     news_keywords: Joi.string(),
@@ -189,8 +195,8 @@ const updateAlert = {
     priorityId: Joi.number().integer(),
     startDate: Joi.date(),
     
-    // Conditional logic for multi-condition alerts
-    condition_logic_id: Joi.number().integer(),
+    // Conditional logic for multi-condition alerts (camelCase from frontend)
+    conditionLogicId: Joi.number().integer(),
     parent_alert_id: Joi.number().integer().positive().allow(null),
     
     // Scheduling

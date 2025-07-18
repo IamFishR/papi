@@ -7,6 +7,7 @@ const config = require('./config/config');
 const logger = require('./config/logger');
 const db = require('./database/models');
 const alertScheduler = require('./jobs/alertScheduler');
+const indicatorCalculationJob = require('./jobs/indicatorCalculationJob');
 const moment = require('moment-timezone');
 
 // Set timezone for the application
@@ -80,6 +81,9 @@ const startServer = async () => {
     
     // Start alert scheduler
     alertScheduler.start();
+    
+    // Start technical indicator calculation job
+    indicatorCalculationJob.start();
   } catch (error) {
     logger.error('Unable to connect to the database:', error);
     process.exit(1);
@@ -95,6 +99,7 @@ process.on('unhandledRejection', (reason, promise) => {
 process.on('uncaughtException', (error) => {
   logger.error('Uncaught Exception:', error);
   alertScheduler.stop();
+  indicatorCalculationJob.stop();
   process.exit(1);
 });
 
@@ -102,12 +107,14 @@ process.on('uncaughtException', (error) => {
 process.on('SIGTERM', () => {
   logger.info('SIGTERM received, shutting down gracefully');
   alertScheduler.stop();
+  indicatorCalculationJob.stop();
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
   logger.info('SIGINT received, shutting down gracefully');
   alertScheduler.stop();
+  indicatorCalculationJob.stop();
   process.exit(0);
 });
 

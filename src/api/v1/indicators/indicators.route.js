@@ -23,4 +23,10 @@ router.post('/process-all', authenticate, catchAsync(indicatorsController.proces
 // Get technical indicators data for a stock
 router.get('/stock/:stockId', authenticate, catchAsync(indicatorsController.getStockIndicators));
 
+// Get calculation status and job status
+router.get('/status', authenticate, catchAsync(indicatorsController.getCalculationStatus));
+
+// Clean up old indicator data
+router.delete('/cleanup', authenticate, catchAsync(indicatorsController.cleanupOldIndicators));
+
 module.exports = router;

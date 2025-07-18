@@ -3,6 +3,7 @@
  */
 const { StatusCodes } = require('http-status-codes');
 const indicatorService = require('./indicator.service');
+const indicatorCalculationJob = require('../../../jobs/indicatorCalculationJob');
 const logger = require('../../../config/logger');
 
 /**
@@ -36,14 +37,18 @@ const calculateIndicators = async (req, res) => {
 };
 
 /**
- * Process indicators for all stocks
+ * Process indicators for all stocks using the new automated job
  */
 const processAllIndicators = async (req, res) => {
   try {
-    const results = await indicatorService.processIndicators();
+    logger.info('Manual indicator calculation requested via API');
+    
+    // Use the new automated calculation job
+    const results = await indicatorCalculationJob.runManually();
     
     res.status(StatusCodes.OK).json({
       success: true,
+      message: 'Indicator calculation completed',
       data: results
     });
   } catch (error) {
@@ -144,10 +149,72 @@ const getStockIndicators = async (req, res) => {
   }
 };
 
+/**
+ * Get calculation status and job status
+ */
+const getCalculationStatus = async (req, res) => {
+  try {
+    // Get today's calculation summary
+    const summary = await indicatorCalculationJob.getCalculationSummary();
+    
+    // Get total indicator count
+    const db = require('../../../database/models');
+    const totalIndicators = await db.TechnicalIndicator.count();
+    
+    // Get last calculation time
+    const lastCalculation = await db.TechnicalIndicator.findOne({
+      order: [['calculation_date', 'DESC']],
+      attributes: ['calculation_date']
+    });
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: {
+        isRunning: indicatorCalculationJob.isRunning,
+        todaysSummary: summary,
+        totalIndicators,
+        lastCalculation: lastCalculation?.calculation_date,
+        nextScheduledRun: '16:00 IST (daily, weekdays only)'
+      }
+    });
+  } catch (error) {
+    logger.error('Error fetching calculation status:', error);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: 'Failed to fetch calculation status'
+    });
+  }
+};
+
+/**
+ * Clean up old indicator data
+ */
+const cleanupOldIndicators = async (req, res) => {
+  try {
+    const { days = 365 } = req.query;
+    
+    const deletedCount = await indicatorCalculationJob.cleanupOldIndicators();
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: `Cleaned up ${deletedCount} old indicators`,
+      data: { deletedCount }
+    });
+  } catch (error) {
+    logger.error('Error cleaning up indicators:', error);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: 'Failed to cleanup indicators'
+    });
+  }
+};
+
 module.exports = {
   calculateIndicators,
   processAllIndicators,
   getIndicatorTypes,
   getIndicatorConditions,
-  getStockIndicators
+  getStockIndicators,
+  getCalculationStatus,
+  cleanupOldIndicators
 };
